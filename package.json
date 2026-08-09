@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "concurrently \"node server.js\" \"vite\"",
     "build": "vite build",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "npm run test:unit && npm run test:api",
+    "test:unit": "vitest run tests/unit",
+    "test:api": "vitest run tests/api",
+    "test:e2e": "npm run build && playwright test"
   },
   "dependencies": {
     "dotenv": "latest",
@@ -14,7 +18,11 @@
     "express": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "concurrently": "latest",
-    "vite": "latest"
+    "jsdom": "^29.1.1",
+    "supertest": "^7.2.2",
+    "vite": "latest",
+    "vitest": "^4.1.10"
   }
 }
