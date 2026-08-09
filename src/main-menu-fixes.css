@@ -2,6 +2,26 @@
   display: none;
 }
 
+.language-toggle {
+  min-width: 34px;
+  height: 27px;
+  padding: 0 8px;
+  border: 1px solid rgba(110, 218, 240, .35);
+  background: rgba(13, 47, 61, .35);
+  color: #8fe7f3;
+  font: 500 9px Orbitron, sans-serif;
+  letter-spacing: 1px;
+  cursor: pointer;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  transition: .2s;
+}
+
+.language-toggle:hover {
+  color: #efffff;
+  border-color: #83efff;
+  box-shadow: 0 0 12px rgba(79, 218, 244, .28);
+}
+
 @media (min-width: 901px) {
   .left-panel .panel-title.second {
     margin-top: 18px;

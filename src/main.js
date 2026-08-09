@@ -39,7 +39,7 @@ app.innerHTML = `
       <button title="安全">⬡<small>SECURE</small></button>
       <button title="网络">◎<small>NET</small></button>
     </nav>
-    <div class="system-state"><i></i><span id="clock">--:--:--</span><em>核心待命</em></div>
+    <div class="system-state"><button id="languageToggle" class="language-toggle" type="button">EN</button><i></i><span id="clock">--:--:--</span><em>核心待命</em></div>
   </header>
   <main class="hud">
     <aside class="panel left-panel">
@@ -144,6 +144,11 @@ const $ = (s) => document.querySelector(s);
 let connected = false, listening = false, recognitionActive = false, recognitionPausedForSpeech = false, recognitionRestartTimer = null, startedAt = 0, recognition = null;
 let currentAudio = null, currentAudioUrl = null, speechAudioContext = null;
 let appSettings = { model:'deepseek-v4-flash', memoryEnabled:true, autoMemory:true, memoryLimit:200, memoryContextLimit:8, ttsEnabled:true, ttsVoice:'zh-CN-YunxiNeural', ttsRate:-10, ttsPitch:-18, robotIntensity:55 };
+
+function updateLanguageToggle(){
+  const button=$('#languageToggle');if(!button)return;
+  const english=getLanguage()==='en';button.textContent=english?'中':'EN';button.title=english?'切换到中文':'Switch to English';button.setAttribute('aria-label',button.title);
+}
 
 function scheduleRecognitionRestart(delay=350){
   clearTimeout(recognitionRestartTimer);
@@ -333,10 +338,12 @@ loadSettings();
 $('#settingsNav').onclick=openSettings;$('#closeSettings').onclick=closeSettings;$('#saveSettings').onclick=saveSettings;$('#settingsModal').onclick=e=>{if(e.target===$('#settingsModal'))closeSettings()};
 document.querySelectorAll('[data-settings-tab]').forEach(button=>button.onclick=()=>{document.querySelectorAll('[data-settings-tab]').forEach(x=>x.classList.toggle('active',x===button));document.querySelectorAll('[data-settings-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.settingsPane===button.dataset.settingsTab))});
 $('#settingLanguage').onchange=e=>setLanguage(e.target.value,app);
+$('#languageToggle').onclick=()=>{const next=getLanguage()==='en'?'zh-CN':'en';setLanguage(next,app);$('#settingLanguage').value=next;updateLanguageToggle();};
 ['#settingRate','#settingPitch','#settingRobot'].forEach(selector=>$(selector).oninput=updateRangeLabels);
 $('#testVoice').onclick=()=>speak(tr('试听语音'));
 $('#clearMemories').onclick=async()=>{if(!confirm(tr('确定清空全部长期记忆吗？此操作无法撤销。')))return;await fetch('/api/memories',{method:'DELETE'});renderSettingsMemories();updateMemoryCount();showToast(tr('长期记忆已清空'))};
-window.addEventListener('jarvis:languagechange',()=>{if(recognition)recognition.lang=getLanguage()==='en'?'en-US':'zh-CN';setConnected(connected);renderSettingsMemories()});
+window.addEventListener('jarvis:languagechange',()=>{if(recognition)recognition.lang=getLanguage()==='en'?'en-US':'zh-CN';setConnected(connected);updateLanguageToggle();renderSettingsMemories()});
+updateLanguageToggle();
 
 setInterval(()=>{
   const now = new Date(); $('#clock').textContent = now.toLocaleTimeString(locale(),{hour12:false});
