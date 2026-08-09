@@ -1,0 +1,87 @@
+.login-reactor .orbit-outer {
+  animation: reactorIdleSpin 18s linear infinite;
+}
+
+.login-reactor .orbit-scale {
+  animation: reactorIdleSpin 34s linear infinite reverse;
+}
+
+.login-reactor .orbit-armor {
+  animation: reactorIdleSpin 25s linear infinite reverse;
+}
+
+.login-reactor .orbit-energy {
+  animation: reactorIdleSpin 12s linear infinite;
+}
+
+.login-reactor .orbit-inner {
+  animation: reactorIdlePulse 3s ease-in-out infinite alternate;
+}
+
+.login-reactor .reactor-center {
+  animation: reactorIdleCore 2.4s ease-in-out infinite alternate;
+}
+
+.login-reactor .reactor-center::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: linear-gradient(transparent 42%, rgba(96, 233, 255, .12) 49%, rgba(196, 251, 255, .25) 50%, transparent 55%);
+  animation: reactorScan 2.8s linear infinite;
+  pointer-events: none;
+}
+
+.login-reactor .reactor-index {
+  animation: reactorDataBlink 2s steps(2, end) infinite;
+  min-width: 34px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  text-shadow: 0 0 7px rgba(112, 239, 252, .7);
+}
+
+.login-reactor .reactor-index::after {
+  content: attr(data-label);
+  display: block;
+  margin-top: 2px;
+  color: rgba(96, 177, 193, .65);
+  font-size: 4px;
+  letter-spacing: 1px;
+}
+
+.login-reactor .orbit-energy > i {
+  animation: reactorLamp 1.1s ease-in-out infinite alternate;
+}
+
+.booting .login-reactor .orbit-outer { animation-duration: 2.7s; }
+.booting .login-reactor .orbit-scale { animation-duration: 7s; }
+.booting .login-reactor .orbit-armor { animation-duration: 1.9s; }
+.booting .login-reactor .orbit-energy { animation-duration: 3.6s; }
+.booting .login-reactor .orbit-inner { animation-duration: .5s; }
+.booting .login-reactor .reactor-center { animation-duration: .7s; }
+
+@keyframes reactorIdleSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes reactorIdlePulse {
+  to { opacity: .48; transform: scale(.975); }
+}
+
+@keyframes reactorIdleCore {
+  to { box-shadow: inset 0 0 40px #0a4654, 0 0 26px rgba(77, 229, 247, .24); filter: brightness(1.15); }
+}
+
+@keyframes reactorScan {
+  from { transform: rotate(0deg) scale(.9); opacity: .2; }
+  50% { opacity: .9; }
+  to { transform: rotate(360deg) scale(1.04); opacity: .2; }
+}
+
+@keyframes reactorDataBlink {
+  50% { opacity: .42; }
+}
+
+@keyframes reactorLamp {
+  to { transform: scale(1.35); filter: brightness(1.8); }
+}
