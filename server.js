@@ -6,11 +6,13 @@ import path from 'node:path';
 import multer from 'multer';
 import mammoth from 'mammoth';
 import { PDFParse } from 'pdf-parse';
+import { fileURLToPath } from 'node:url';
+import { filterTasks, findConflicts, validateEvent, validateTask } from './src/schedule-core.js';
 
 dotenv.config();
 const app = express();
 const port = Number(process.env.PORT || 3001);
-const memoryDir = path.resolve('data');
+const memoryDir = path.resolve(process.env.JARVIS_DATA_DIR || 'data');
 const memoryFile = path.join(memoryDir, 'memories.json');
 const settingsFile = path.join(memoryDir, 'settings.json');
 const schedulesFile = path.join(memoryDir, 'schedules.json');
@@ -18,6 +20,8 @@ const workspacesFile = path.join(memoryDir, 'workspaces.json');
 const knowledgeFile = path.join(memoryDir, 'knowledge.json');
 const knowledgeUploadDir = path.join(memoryDir, 'knowledge-files');
 const providerSecretsFile = path.join(memoryDir, 'provider-secrets.json');
+const tasksFile = path.join(memoryDir, 'tasks.json');
+const eventsFile = path.join(memoryDir, 'events.json');
 const defaultSettings = {
   model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
   provider: 'deepseek',
@@ -75,6 +79,12 @@ async function writeMemories(memories) {
   await mkdir(memoryDir, { recursive: true });
   await writeFile(memoryFile, JSON.stringify(memories, null, 2), 'utf8');
 }
+
+async function readCollection(file) {
+  try { const value=JSON.parse(await readFile(file,'utf8')); return Array.isArray(value)?value:[]; }
+  catch(error){if(error.code==='ENOENT')return[];throw error;}
+}
+async function writeCollection(file,value){await mkdir(memoryDir,{recursive:true});await writeFile(file,JSON.stringify(value,null,2),'utf8');}
 
 async function readSchedules() {
   try { const value = JSON.parse(await readFile(schedulesFile, 'utf8')); return Array.isArray(value) ? value : []; }
@@ -285,6 +295,16 @@ app.post('/api/knowledge/upload',knowledgeUpload.single('file'),async(req,res)=>
 app.get('/api/knowledge/search',async(req,res)=>{try{const query=String(req.query.query||'').trim().slice(0,500),limit=Math.max(1,Math.min(8,Number(req.query.limit||5))),terms=searchTerms(query),items=await readKnowledge(),matches=[];for(const item of items)for(const chunk of item.chunks||[]){const text=chunk.content.toLowerCase();let score=terms.reduce((total,term)=>total+(text.includes(term)?2:0),0);if(query&&text.includes(query.toLowerCase()))score+=6;if(score>0)matches.push({documentId:item.id,source:item.name,type:item.type,chunk:chunk.index,content:chunk.content,score});}matches.sort((a,b)=>b.score-a.score);res.json({matches:matches.slice(0,limit),query});}catch(error){res.status(500).json({error:'知识库检索失败',detail:error.message});}});
 app.delete('/api/knowledge/:id',async(req,res)=>{try{const items=await readKnowledge(),item=items.find(x=>x.id===req.params.id);if(!item)return res.status(404).json({error:'没有找到该文档'});await writeKnowledge(items.filter(x=>x.id!==req.params.id));try{await unlink(path.join(knowledgeUploadDir,item.storedName))}catch{}res.json({deleted:true});}catch(error){res.status(500).json({error:'删除文档失败',detail:error.message});}});
 
+app.get('/api/tasks',async(req,res)=>{try{const tasks=filterTasks(await readCollection(tasksFile),req.query);res.json({tasks:tasks.sort((a,b)=>String(a.dueAt||'').localeCompare(String(b.dueAt||''))),total:tasks.length});}catch(error){res.status(500).json({error:'读取任务失败',detail:error.message});}});
+app.post('/api/tasks',async(req,res)=>{try{const parsed=validateTask(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});const tasks=await readCollection(tasksFile),now=new Date().toISOString(),task={id:crypto.randomUUID(),...parsed.value,createdAt:now,updatedAt:now};tasks.push(task);await writeCollection(tasksFile,tasks);res.status(201).json({task});}catch(error){res.status(500).json({error:'保存任务失败',detail:error.message});}});
+app.put('/api/tasks/:id',async(req,res)=>{try{const tasks=await readCollection(tasksFile),index=tasks.findIndex(item=>item.id===req.params.id);if(index<0)return res.status(404).json({error:'没有找到该任务'});const parsed=validateTask(req.body||{},tasks[index]);if(parsed.error)return res.status(400).json({error:parsed.error});tasks[index]={...tasks[index],...parsed.value,updatedAt:new Date().toISOString()};await writeCollection(tasksFile,tasks);res.json({task:tasks[index]});}catch(error){res.status(500).json({error:'更新任务失败',detail:error.message});}});
+app.delete('/api/tasks/:id',async(req,res)=>{try{const tasks=await readCollection(tasksFile),next=tasks.filter(item=>item.id!==req.params.id);if(next.length===tasks.length)return res.status(404).json({error:'没有找到该任务'});await writeCollection(tasksFile,next);res.json({deleted:true,total:next.length});}catch(error){res.status(500).json({error:'删除任务失败',detail:error.message});}});
+
+app.get('/api/events',async(req,res)=>{try{const date=String(req.query.date||'');let events=await readCollection(eventsFile);if(date)events=events.filter(event=>{const start=new Date(`${date}T00:00:00`),end=new Date(start);end.setDate(end.getDate()+1);return new Date(event.startAt)<end&&new Date(event.endAt)>start;});events.sort((a,b)=>a.startAt.localeCompare(b.startAt));res.json({events,total:events.length});}catch(error){res.status(500).json({error:'读取日程失败',detail:error.message});}});
+app.post('/api/events',async(req,res)=>{try{const parsed=validateEvent(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});const events=await readCollection(eventsFile),now=new Date().toISOString(),event={id:crypto.randomUUID(),...parsed.value,createdAt:now,updatedAt:now},conflicts=findConflicts(event,events);events.push(event);await writeCollection(eventsFile,events);res.status(201).json({event,conflicts});}catch(error){res.status(500).json({error:'保存日程失败',detail:error.message});}});
+app.put('/api/events/:id',async(req,res)=>{try{const events=await readCollection(eventsFile),index=events.findIndex(item=>item.id===req.params.id);if(index<0)return res.status(404).json({error:'没有找到该日程'});const parsed=validateEvent(req.body||{},events[index]);if(parsed.error)return res.status(400).json({error:parsed.error});events[index]={...events[index],...parsed.value,updatedAt:new Date().toISOString()};const conflicts=findConflicts(events[index],events,events[index].id);await writeCollection(eventsFile,events);res.json({event:events[index],conflicts});}catch(error){res.status(500).json({error:'更新日程失败',detail:error.message});}});
+app.delete('/api/events/:id',async(req,res)=>{try{const events=await readCollection(eventsFile),next=events.filter(item=>item.id!==req.params.id);if(next.length===events.length)return res.status(404).json({error:'没有找到该日程'});await writeCollection(eventsFile,next);res.json({deleted:true,total:next.length});}catch(error){res.status(500).json({error:'删除日程失败',detail:error.message});}});
+
 app.post('/api/tts', async (req, res) => {
   const text = String(req.body?.text || '').trim().slice(0, 1200);
   if (!text) return res.status(400).json({ error: '缺少需要播报的文本' });
@@ -309,4 +329,5 @@ app.use((error,_req,res,_next)=>{
   res.status(500).json({error:'服务处理失败',detail:error.message});
 });
 
-app.listen(port, () => console.log(`JARVIS core listening on http://localhost:${port}`));
+export { app };
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))app.listen(port,()=>console.log(`JARVIS core listening on http://localhost:${port}`));

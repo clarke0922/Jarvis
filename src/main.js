@@ -10,6 +10,8 @@ import './settings.css';
 import './schedule-center.css';
 import './workspace-center.css';
 import './knowledge-center.css';
+import './task-center.css';
+import { initTaskCenter, refreshTaskCenter } from './task-center.js';
 import { getLanguage, getLanguagePreference, locale, localizeDom, setLanguage, tr } from './i18n.js';
 import './login-motion.css';
 
@@ -36,6 +38,7 @@ app.innerHTML = `
     <nav class="main-nav" aria-label="主菜单">
       <button class="active" title="主页">⌂<small>HOME</small></button>
       <button id="scheduleNav" title="任务与日程">▱<small>AGENDA</small></button>
+      <button id="taskCenterNav" title="月历任务中心">▦<small>PLAN</small></button>
       <button id="workspaceNav" title="对话工作区">⚒<small>WORK</small></button>
       <button id="settingsNav" title="系统设置">⌘<small>CORE</small></button>
       <button id="knowledgeNav" title="本地知识库">◉<small>KNOW</small></button>
@@ -313,7 +316,10 @@ const toolDefinitions = [
   {type:'function',function:{name:'open_website',description:'打开用户明确要求的 HTTPS 网站',parameters:{type:'object',properties:{url:{type:'string'},reason:{type:'string'}},required:['url','reason']}}},
   {type:'function',function:{name:'save_memory',description:'保存用户明确要求记住的长期称呼、偏好、习惯或目标。禁止保存密码、密钥和支付信息',parameters:{type:'object',properties:{content:{type:'string'},category:{type:'string',enum:['identity','preference','habit','goal','relationship','general']}},required:['content','category']}}},
   {type:'function',function:{name:'recall_memories',description:'检索与当前话题有关的长期记忆',parameters:{type:'object',properties:{query:{type:'string'}},required:['query']}}},
-  {type:'function',function:{name:'forget_memory',description:'按关键词查找并忘记一条长期记忆，执行前必须由用户确认',parameters:{type:'object',properties:{query:{type:'string'}},required:['query']}}}
+  {type:'function',function:{name:'forget_memory',description:'按关键词查找并忘记一条长期记忆，执行前必须由用户确认',parameters:{type:'object',properties:{query:{type:'string'}},required:['query']}}},
+  {type:'function',function:{name:'create_task',description:'创建一个待办任务',parameters:{type:'object',properties:{title:{type:'string'},notes:{type:'string'},priority:{type:'string',enum:['low','medium','high']},dueAt:{type:'string'}},required:['title']}}},
+  {type:'function',function:{name:'create_event',description:'创建一项有起止时间的日程',parameters:{type:'object',properties:{title:{type:'string'},notes:{type:'string'},startAt:{type:'string'},endAt:{type:'string'}},required:['title','startAt','endAt']}}},
+  {type:'function',function:{name:'query_schedule',description:'查询指定日期的月历任务与日程',parameters:{type:'object',properties:{date:{type:'string'}},required:['date']}}}
 ];
 
 async function executeTool(name, args) {
@@ -326,6 +332,9 @@ async function executeTool(name, args) {
   if(name==='save_memory'){const response=await fetch('/api/memories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:args.content,category:args.category})});const data=await response.json();if(!response.ok)return data.error||(english?'Failed to save memory':'记忆保存失败');updateMemoryCount();addTask(`${english?'Long-term memory':'长期记忆'}：${args.content}`);return data.duplicate?(english?'This is already in long-term memory':'这条内容已经在长期记忆中'):(english?'Saved to long-term memory':'已经写入长期记忆');}
   if(name==='recall_memories'){const response=await fetch(`/api/memories?query=${encodeURIComponent(args.query)}`);const data=await response.json();return data.memories?.length?data.memories.map((m,i)=>`${i+1}. [${m.category}] ${m.content}`).join('\n'):(english?'No relevant long-term memories found':'没有找到相关长期记忆');}
   if(name==='forget_memory'){const response=await fetch(`/api/memories?query=${encodeURIComponent(args.query)}`);const data=await response.json();const memory=data.memories?.[0];if(!memory)return english?'No relevant memory found':'没有找到相关记忆';if(!confirm(`JARVIS ${english?'requests to forget this memory':'请求忘记这条记忆'}：\n“${memory.content}”`))return english?'Deletion cancelled':'用户取消了删除';const deleted=await fetch(`/api/memories/${memory.id}`,{method:'DELETE'});if(!deleted.ok)return english?'Failed to delete memory':'删除记忆失败';updateMemoryCount();addTask(`${english?'Forgotten':'已忘记'}：${memory.content}`);return english?'Memory forgotten':'已经忘记这条记忆';}
+  if(name==='create_task'){const response=await fetch('/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)}),data=await response.json();if(!response.ok)return data.error;addTask(`${english?'Task':'任务'}：${data.task.title}`,english?'Pending':'待办');refreshTaskCenter();return english?'Task created':'任务已创建';}
+  if(name==='create_event'){const response=await fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)}),data=await response.json();if(!response.ok)return data.error;addTask(`${english?'Event':'日程'}：${data.event.title}`);refreshTaskCenter();return data.conflicts?.length?(english?'Event created with a time conflict':'日程已创建，但存在时间冲突'):(english?'Event created':'日程已创建');}
+  if(name==='query_schedule'){const [trsp,ersp]=await Promise.all([fetch(`/api/tasks?date=${encodeURIComponent(args.date)}`),fetch(`/api/events?date=${encodeURIComponent(args.date)}`)]),tasks=(await trsp.json()).tasks||[],events=(await ersp.json()).events||[];if(!tasks.length&&!events.length)return english?'No tasks or events for that date':'该日期没有任务或日程';return [...tasks.map(item=>`${english?'Task':'任务'}: ${item.title}`),...events.map(item=>`${english?'Event':'日程'}: ${item.title} (${new Date(item.startAt).toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})})`)].join('\n');}
   return english?'Unknown tool':'未知工具';
 }
 
@@ -463,6 +472,7 @@ $('#testVoice').onclick=()=>speak(tr('试听语音'),{voice:$('#settingVoice').v
 $('#clearMemories').onclick=async()=>{if(!confirm(tr('确定清空全部长期记忆吗？此操作无法撤销。')))return;await fetch('/api/memories',{method:'DELETE'});renderSettingsMemories();updateMemoryCount();showToast(tr('长期记忆已清空'))};
 window.addEventListener('jarvis:languagechange',()=>{if(recognition)recognition.lang=getLanguage()==='en'?'en-US':'zh-CN';setConnected(connected);updateLanguageToggle();renderSettingsMemories()});
 updateLanguageToggle();
+initTaskCenter($('#taskCenterNav'));
 setInterval(checkScheduleReminders,30000);setTimeout(checkScheduleReminders,3500);
 
 setInterval(()=>{
