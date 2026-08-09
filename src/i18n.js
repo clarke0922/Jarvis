@@ -5,6 +5,67 @@ const messages = {
   }
 };
 
+// Complete translations for the newer settings, workspace, schedule, and
+// knowledge-center surfaces. Keeping these keys here also makes hidden modal
+// content localize correctly before it is opened.
+Object.assign(messages.en, {
+  'MODEL PROVIDER // 推理核心': 'MODEL PROVIDER // REASONING CORE',
+  '模型提供商': 'Model provider',
+  '模型名称': 'Model name',
+  '留空表示保持现有密钥': 'Leave blank to keep the current key',
+  '本地模型': 'Local model',
+  'Ollama · 本地模型': 'Ollama · Local model',
+  'API KEY 已配置': 'API KEY CONFIGURED',
+  'API KEY 未配置': 'API KEY NOT CONFIGURED',
+  '密钥只保存在本地服务器环境中，设置界面不会显示密钥内容。': 'The key is stored only in the local server environment and is never displayed here.',
+  '暂无运行任务': 'No active missions',
+  '用语音或文字下达指令': 'Issue a command by voice or text',
+  '本地知识库': 'Local Knowledge Base',
+  '关闭': 'Close',
+  '上传资料': 'Upload documents',
+  'PDF、Word、Markdown': 'PDF, Word, Markdown',
+  '单文件最大 20MB · 仅保存在本机': '20 MB maximum · Stored locally only',
+  '选择文件': 'Choose file',
+  '文档在本机解析和索引，仅相关片段会随问题发送给推理模型。': 'Documents are parsed and indexed locally. Only relevant excerpts are sent to the reasoning model.',
+  '个文档': ' documents',
+  '测试知识库检索…': 'Search the knowledge base…',
+  '检索': 'Search',
+  '尚未添加本地资料': 'No local documents yet',
+  '删除文档': 'Delete document',
+  '对话与工作区': 'Conversations & Workspaces',
+  '搜索标题或对话内容…': 'Search titles or conversation content…',
+  '＋ 新建会话': '＋ New session',
+  '保存当前会话': 'Save current session',
+  '导出 Markdown': 'Export Markdown',
+  '工作区标题': 'Workspace title',
+  '为这次工作命名': 'Name this workspace',
+  '临时会话': 'Temporary session',
+  '连续工作模式': 'Continuous work mode',
+  '任务与日程中心': 'Tasks & Schedule Center',
+  '任务名称': 'Task name',
+  '例如：提交周报': 'For example: Submit weekly report',
+  '日期与时间': 'Date & time',
+  '重复': 'Repeat',
+  '不重复': 'No repeat',
+  '每天': 'Daily',
+  '每周': 'Weekly',
+  '每月': 'Monthly',
+  '提前提醒': 'Reminder',
+  '准时': 'At due time',
+  '分钟': 'minutes',
+  '小时': 'hour',
+  '天': 'day',
+  '优先级': 'Priority',
+  '普通': 'Normal',
+  '高': 'High',
+  '低': 'Low',
+  '备注': 'Notes',
+  '加入任务中心': 'Add to task center',
+  '待办': 'To-do',
+  '今天': 'Today',
+  '全部': 'All'
+});
+
 const supported = ['zh-CN', 'en'];
 const browserLanguage = () => (navigator.languages || [navigator.language]).some(value => value?.toLowerCase().startsWith('zh')) ? 'zh-CN' : 'en';
 let preference = localStorage.getItem('jarvis-language') || 'auto';
