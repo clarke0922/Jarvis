@@ -39,7 +39,8 @@
   .core-zone .activate {
     left: auto;
     right: 22px;
-    bottom: 20px;
+    top: 20px;
+    bottom: auto;
     transform: none;
     min-width: 205px;
   }
