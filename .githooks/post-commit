@@ -1,0 +1,17 @@
+#!/bin/sh
+
+branch="$(git branch --show-current)"
+
+if [ -z "$branch" ]; then
+  echo "[auto-push] Detached HEAD; skipping automatic push."
+  exit 0
+fi
+
+echo "[auto-push] Pushing $branch to origin..."
+if git push -u origin "$branch"; then
+  echo "[auto-push] Push completed."
+else
+  echo "[auto-push] Push failed; the commit remains safely stored locally." >&2
+fi
+
+exit 0
