@@ -3,9 +3,11 @@ import './tts.css';
 import './boot.css';
 import './armor-mask.css';
 import './main-menu.css';
+import './jarvis-core.css';
 import './main-menu-fixes.css';
 import './login-reactor.css';
 import './settings.css';
+import './login-motion.css';
 
 const app = document.querySelector('#app');
 app.innerHTML = `
@@ -18,7 +20,7 @@ app.innerHTML = `
       <div class="reactor-orbit orbit-energy"><i></i><i></i></div>
       <div class="reactor-orbit orbit-inner"></div>
       <div class="reactor-center"><b>J.A.R.V.I.S.</b><small>NEURAL ACCESS CORE</small></div>
-      <span class="reactor-index index-a">07</span><span class="reactor-index index-b">98.7</span><span class="reactor-index index-c">SYS</span>
+      <span id="counterSequence" class="reactor-index index-a" data-label="SEQ">00</span><span id="counterSync" class="reactor-index index-b" data-label="SYNC">00.0</span><span id="counterOps" class="reactor-index index-c" data-label="OPS">000</span>
     </div>
     <div class="boot-copy"><small>ADVANCED PERSONAL INTELLIGENCE</small><h1>JARVIS</h1><p id="bootStatus">等待生物识别授权</p></div>
     <button id="bootButton" class="boot-button"><b>启动系统</b><small>INITIALIZE CORE</small></button>
@@ -57,11 +59,18 @@ app.innerHTML = `
 
     <section class="core-zone">
       <div class="target-lines"></div>
-      <div class="armor-figure" aria-hidden="true">
-        <div class="figure-head"><i></i><i></i></div>
-        <div class="figure-neck"></div>
-        <div class="figure-body"><span class="shoulder left"></span><span class="shoulder right"></span><span class="chest left"></span><span class="chest right"></span><b class="reactor"><i></i></b></div>
-        <div class="figure-arm left"><i></i></div><div class="figure-arm right"><i></i></div>
+      <div class="jarvis-matrix" aria-hidden="true">
+        <div class="matrix-grid"></div><div class="matrix-scan"></div><div class="matrix-noise"></div>
+        <div class="holo-ring ring-01"></div><div class="holo-ring ring-02"></div><div class="holo-ring ring-03"></div>
+        <div class="data-orbit orbit-left"><i></i><b>011010</b><span></span></div>
+        <div class="data-orbit orbit-right"><i></i><b>98.742</b><span></span></div>
+        <div class="holo-avatar movie-mask">
+          <div class="mask-photo"></div><div class="mask-edge"></div><div class="mask-eyes"><i></i><i></i></div>
+          <div class="mask-scanline"></div><div class="mask-readout">FACIAL ARMOR // ONLINE</div>
+        </div>
+        <div class="matrix-ticks"></div><div class="matrix-sweep"></div>
+        <div class="stream stream-a">NEURAL_07 · LINK_STABLE · 01101001</div>
+        <div class="stream stream-b">CORE_SYNC · 98.742% · ACTIVE</div>
       </div>
       <div class="hud-caption caption-a"><b>MARK // 07</b><span>ARMOR INTEGRITY</span><i></i></div>
       <div class="hud-caption caption-b"><b>NEURAL LINK</b><span>SYNC 98.7%</span><i></i></div>
@@ -83,7 +92,7 @@ app.innerHTML = `
     </aside>
   </main>
   <footer>
-    <div class="input-wrap"><span>›</span><input id="command" placeholder="输入指令，或直接与我对话…" autocomplete="off"><button id="send">发送</button></div>
+    <div class="input-wrap"><span>›</span><textarea id="command" rows="3" placeholder="输入指令，或直接与我对话…" autocomplete="off"></textarea><button id="send">发送</button></div>
     <div class="footer-meta"><span>SECURE CONNECTION</span><span>LOCAL TIME // <b id="date"></b></span><span>JARVIS CORE v0.1</span></div>
   </footer>
   <div id="toast" class="toast"></div>
@@ -163,12 +172,27 @@ function playBootSound(){
 
 function bootJarvis(){
   const screen=$('#bootScreen'),status=$('#bootStatus'),button=$('#bootButton');button.disabled=true;playBootSound();screen.classList.add('booting');
+  bootCounterMode=true;bootCounterStarted=performance.now();
   const steps=[[200,'验证完成'],[650,'装甲协议载入'],[1100,'神经核心同步'],[1650,'能源矩阵上线'],[2250,'所有系统正常'],[2900,'欢迎回来']];
   steps.forEach(([delay,text])=>setTimeout(()=>status.textContent=text,delay));
   setTimeout(()=>{screen.classList.add('complete');setTimeout(()=>screen.remove(),750)},3200);
 }
 
 $('#bootButton').onclick=bootJarvis;
+
+let bootCounterMode=false,bootCounterStarted=0;
+function animateBootCounters(now){
+  const seq=$('#counterSequence'),sync=$('#counterSync'),ops=$('#counterOps');
+  if(!seq||!sync||!ops)return;
+  if(bootCounterMode){
+    const progress=Math.min(1,(now-bootCounterStarted)/3000),eased=1-Math.pow(1-progress,3);
+    seq.textContent=String(Math.round(eased*99)).padStart(2,'0');sync.textContent=(eased*100).toFixed(1);ops.textContent=String(Math.round(eased*999)).padStart(3,'0');
+  }else{
+    const seconds=now/1000;seq.textContent=String(Math.floor(seconds*7)%100).padStart(2,'0');sync.textContent=((seconds*4.3)%100).toFixed(1).padStart(4,'0');ops.textContent=String(Math.floor(seconds*31)%1000).padStart(3,'0');
+  }
+  requestAnimationFrame(animateBootCounters);
+}
+requestAnimationFrame(animateBootCounters);
 const history = [{ role: 'system', content: '你是 JARVIS，一个原创的中文私人智能助理。表达沉稳、克制、机敏，带英式管家般的礼貌和轻微幽默，但不模仿任何真实演员或电影角色。回答简洁自然。你可以记录备忘、设置计时器、读取时间、经用户确认后打开网站。你拥有长期记忆工具：当用户明确说“记住”或提供明显长期稳定的称呼、偏好、习惯、目标时，调用 save_memory；不要保存密码、密钥、验证码、支付信息或未经用户同意的敏感数据。任何高影响操作必须先取得确认。' }];
 
 const addTranscript = (who, text) => {
@@ -296,7 +320,7 @@ async function askDeepSeek(text){
 }
 
 $('#activate').onclick = connectVoice; $('#orb').onclick = connectVoice; $('#send').onclick = ()=>sendText($('#command').value);
-$('#command').onkeydown = e => { if(e.key==='Enter') sendText(e.target.value); };
+$('#command').onkeydown = e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText(e.target.value);} };
 document.querySelectorAll('.quick').forEach(b=>b.onclick=()=>sendText(b.dataset.command));
 updateMemoryCount();
 loadSettings();

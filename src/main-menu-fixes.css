@@ -1,3 +1,7 @@
+#statusText {
+  display: none;
+}
+
 @media (min-width: 901px) {
   .left-panel .panel-title.second {
     margin-top: 18px;
@@ -6,5 +10,61 @@
   .left-panel .quick {
     margin: 4px 0;
     padding: 7px 10px;
+  }
+
+  .hud {
+    height: calc(100vh - 232px);
+  }
+
+  .core-zone .activate {
+    left: auto;
+    right: 22px;
+    bottom: 20px;
+    transform: none;
+    min-width: 205px;
+  }
+
+  .core-zone .status-label {
+    bottom: 66px;
+  }
+
+  footer {
+    height: 144px;
+  }
+
+  .input-wrap {
+    height: 78px;
+    max-width: 760px;
+    align-items: stretch;
+  }
+
+  .input-wrap > span {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 13px;
+  }
+
+  .input-wrap textarea {
+    flex: 1;
+    min-width: 0;
+    resize: none;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #d8f6ff;
+    padding: 11px 12px;
+    font: 500 14px/1.35 Rajdhani, "Microsoft YaHei", sans-serif;
+  }
+
+  .input-wrap textarea::placeholder {
+    color: #426b7b;
+  }
+
+  .input-wrap button {
+    width: 70px;
+  }
+
+  .footer-meta {
+    margin-top: 12px;
   }
 }
