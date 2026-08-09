@@ -1,0 +1,10 @@
+@media (min-width: 901px) {
+  .left-panel .panel-title.second {
+    margin-top: 18px;
+  }
+
+  .left-panel .quick {
+    margin: 4px 0;
+    padding: 7px 10px;
+  }
+}

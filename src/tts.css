@@ -1,0 +1,23 @@
+.speaking .core {
+  animation: coreTalk 1.3s ease-in-out infinite;
+}
+
+.speaking .wave {
+  opacity: 1;
+}
+
+.speaking .wave i {
+  animation: wave .55s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -30ms);
+}
+
+.quick em {
+  float: right;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid rgba(72, 220, 255, .3);
+  border-radius: 10px;
+  color: #69dcf3;
+  font-style: normal;
+  text-align: center;
+}

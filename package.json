@@ -1,0 +1,20 @@
+{
+  "name": "jarvis-voice-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"node server.js\" \"vite\"",
+    "build": "vite build",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "latest",
+    "edge-tts-universal": "latest",
+    "express": "latest"
+  },
+  "devDependencies": {
+    "concurrently": "latest",
+    "vite": "latest"
+  }
+}

@@ -1,0 +1,317 @@
+import './style.css';
+import './tts.css';
+import './boot.css';
+import './armor-mask.css';
+import './main-menu.css';
+import './main-menu-fixes.css';
+import './login-reactor.css';
+import './settings.css';
+
+const app = document.querySelector('#app');
+app.innerHTML = `
+  <section id="bootScreen" class="boot-screen">
+    <div class="boot-grid"></div>
+    <div class="login-reactor" aria-label="JARVIS 环形登录核心">
+      <div class="reactor-orbit orbit-outer"><i></i><i></i><i></i></div>
+      <div class="reactor-orbit orbit-scale"></div>
+      <div class="reactor-orbit orbit-armor"><i></i><i></i><i></i><i></i></div>
+      <div class="reactor-orbit orbit-energy"><i></i><i></i></div>
+      <div class="reactor-orbit orbit-inner"></div>
+      <div class="reactor-center"><b>J.A.R.V.I.S.</b><small>NEURAL ACCESS CORE</small></div>
+      <span class="reactor-index index-a">07</span><span class="reactor-index index-b">98.7</span><span class="reactor-index index-c">SYS</span>
+    </div>
+    <div class="boot-copy"><small>ADVANCED PERSONAL INTELLIGENCE</small><h1>JARVIS</h1><p id="bootStatus">等待生物识别授权</p></div>
+    <button id="bootButton" class="boot-button"><b>启动系统</b><small>INITIALIZE CORE</small></button>
+    <div class="boot-progress"><i></i></div>
+    <div class="boot-corners"><i></i><i></i><i></i><i></i></div>
+  </section>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">J</span><div><b>JARVIS</b><small>PERSONAL INTELLIGENCE SYSTEM</small></div></div>
+    <nav class="main-nav" aria-label="主菜单">
+      <button class="active" title="主页">⌂<small>HOME</small></button>
+      <button title="档案">▱<small>FILES</small></button>
+      <button title="工具">⚒<small>TOOLS</small></button>
+      <button id="settingsNav" title="系统设置">⌘<small>CORE</small></button>
+      <button title="记忆">◉<small>MEMORY</small></button>
+      <button title="安全">⬡<small>SECURE</small></button>
+      <button title="网络">◎<small>NET</small></button>
+    </nav>
+    <div class="system-state"><i></i><span id="clock">--:--:--</span><em>核心待命</em></div>
+  </header>
+  <main class="hud">
+    <aside class="panel left-panel">
+      <div class="panel-title">SYSTEM // 系统状态</div>
+      <div class="metric"><span>神经网络</span><b>READY</b><div><i style="width:91%"></i></div></div>
+      <div class="metric"><span>语音链路</span><b id="voiceLink">STANDBY</b><div><i id="voiceBar" style="width:26%"></i></div></div>
+      <div class="metric"><span>任务引擎</span><b>ONLINE</b><div><i style="width:78%"></i></div></div>
+      <div class="telemetry">
+        <span>LATENCY<strong id="latency">-- ms</strong></span>
+        <span>SESSION<strong id="duration">00:00</strong></span>
+      </div>
+      <div class="panel-title second">QUICK // 快捷指令</div>
+      <button class="quick" data-command="帮我制定今天的计划">▹ 制定今日计划</button>
+      <button class="quick" data-command="记录一个想法">▹ 记录一个想法</button>
+      <button class="quick" data-command="设置一个25分钟专注计时器">▹ 开启专注计时</button>
+      <button class="quick" data-command="告诉我你记得关于我的哪些事情">▹ 查看长期记忆 <em id="memoryCount">0</em></button>
+    </aside>
+
+    <section class="core-zone">
+      <div class="target-lines"></div>
+      <div class="armor-figure" aria-hidden="true">
+        <div class="figure-head"><i></i><i></i></div>
+        <div class="figure-neck"></div>
+        <div class="figure-body"><span class="shoulder left"></span><span class="shoulder right"></span><span class="chest left"></span><span class="chest right"></span><b class="reactor"><i></i></b></div>
+        <div class="figure-arm left"><i></i></div><div class="figure-arm right"><i></i></div>
+      </div>
+      <div class="hud-caption caption-a"><b>MARK // 07</b><span>ARMOR INTEGRITY</span><i></i></div>
+      <div class="hud-caption caption-b"><b>NEURAL LINK</b><span>SYNC 98.7%</span><i></i></div>
+      <div class="hud-caption caption-c"><b>POWER CELL</b><span>STABLE</span><i></i></div>
+      <div class="orb" id="orb">
+        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div>
+        <div class="core"><div class="core-glow"></div><span>AI</span></div>
+      </div>
+      <div class="status-label"><small>VOICE INTERFACE</small><strong id="statusText">点击核心唤醒 JARVIS</strong></div>
+      <button id="activate" class="activate"><span class="mic">⌁</span><b>启动语音链路</b><small>ACTIVATE NEURAL LINK</small></button>
+      <div class="wave" id="wave">${Array.from({length: 36},(_,i)=>`<i style="--i:${i}"></i>`).join('')}</div>
+    </section>
+
+    <aside class="panel right-panel">
+      <div class="panel-title">MISSION // 任务队列</div>
+      <div id="tasks" class="tasks"><div class="empty"><span>◇</span><b>暂无运行任务</b><small>用语音或文字下达指令</small></div></div>
+      <div class="panel-title second">DIALOGUE // 对话记录</div>
+      <div id="transcript" class="transcript"><p><b>JARVIS</b><span>系统已就绪。晚上好，我随时为你效劳。</span></p></div>
+    </aside>
+  </main>
+  <footer>
+    <div class="input-wrap"><span>›</span><input id="command" placeholder="输入指令，或直接与我对话…" autocomplete="off"><button id="send">发送</button></div>
+    <div class="footer-meta"><span>SECURE CONNECTION</span><span>LOCAL TIME // <b id="date"></b></span><span>JARVIS CORE v0.1</span></div>
+  </footer>
+  <div id="toast" class="toast"></div>
+  <div id="settingsModal" class="settings-modal" aria-hidden="true">
+    <section class="settings-shell" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header><div><small>JARVIS CONTROL MATRIX</small><h2 id="settingsTitle">系统设置</h2></div><button id="closeSettings" aria-label="关闭设置">×</button></header>
+      <div class="settings-layout">
+        <nav class="settings-tabs">
+          <button class="active" data-settings-tab="model">◇ <span>模型核心</span></button>
+          <button data-settings-tab="memory">◉ <span>长期记忆</span></button>
+          <button data-settings-tab="voice">⌁ <span>语音系统</span></button>
+          <button data-settings-tab="about">◎ <span>系统信息</span></button>
+        </nav>
+        <div class="settings-content">
+          <div class="settings-pane active" data-settings-pane="model">
+            <h3>DEEPSEEK // 推理核心</h3><label>当前模型<select id="settingModel"><option value="deepseek-v4-flash">DeepSeek V4 Flash · 快速</option><option value="deepseek-v4-pro">DeepSeek V4 Pro · 高性能</option></select></label>
+            <div class="setting-note"><i></i><p><b id="apiKeyState">API 链路检测中</b><span>密钥只保存在本地服务器环境中，设置界面不会显示密钥内容。</span></p></div>
+          </div>
+          <div class="settings-pane" data-settings-pane="memory">
+            <h3>MEMORY // 长期记忆体</h3>
+            <label class="switch-row"><span><b>启用长期记忆</b><small>允许保存和检索个人偏好</small></span><input id="settingMemoryEnabled" type="checkbox"><i></i></label>
+            <label class="switch-row"><span><b>自动记忆</b><small>识别稳定偏好和长期目标</small></span><input id="settingAutoMemory" type="checkbox"><i></i></label>
+            <div class="setting-grid"><label>记忆容量<input id="settingMemoryLimit" type="number" min="20" max="500"></label><label>每轮引用数量<input id="settingMemoryContext" type="number" min="1" max="20"></label></div>
+            <div class="memory-manager"><div><b>已保存记忆</b><button id="clearMemories">清空全部</button></div><div id="settingsMemoryList" class="settings-memory-list"></div></div>
+          </div>
+          <div class="settings-pane" data-settings-pane="voice">
+            <h3>VOICE // 语音系统</h3>
+            <label class="switch-row"><span><b>启用语音播报</b><small>通过免费 Edge TTS 生成语音</small></span><input id="settingTtsEnabled" type="checkbox"><i></i></label>
+            <label>播报音色<select id="settingVoice"><option value="zh-CN-YunxiNeural">云希 · 沉稳男声</option><option value="zh-CN-YunyangNeural">云扬 · 专业男声</option><option value="zh-CN-XiaoxiaoNeural">晓晓 · 自然女声</option></select></label>
+            <label class="range-row"><span>语速 <b id="rateValue">-10%</b></span><input id="settingRate" type="range" min="-30" max="20"></label>
+            <label class="range-row"><span>音调 <b id="pitchValue">-18Hz</b></span><input id="settingPitch" type="range" min="-30" max="20"></label>
+            <label class="range-row"><span>机器人效果 <b id="robotValue">55%</b></span><input id="settingRobot" type="range" min="0" max="100"></label>
+            <button id="testVoice" class="test-voice">试听当前音色</button>
+          </div>
+          <div class="settings-pane" data-settings-pane="about"><h3>ABOUT // 系统信息</h3><div class="about-core"><b>JARVIS</b><span>PERSONAL INTELLIGENCE SYSTEM</span><dl><dt>核心版本</dt><dd>0.2 MEMORY</dd><dt>推理服务</dt><dd>DEEPSEEK</dd><dt>语音服务</dt><dd>EDGE TTS</dd><dt>数据位置</dt><dd>LOCAL ONLY</dd></dl></div></div>
+        </div>
+      </div>
+      <footer><span id="settingsStatus">所有设置保存在本机</span><button id="saveSettings">保存并应用</button></footer>
+    </section>
+  </div>
+`;
+
+const $ = (s) => document.querySelector(s);
+let connected = false, listening = false, recognitionActive = false, recognitionPausedForSpeech = false, recognitionRestartTimer = null, startedAt = 0, recognition = null;
+let currentAudio = null, currentAudioUrl = null, speechAudioContext = null;
+let appSettings = { model:'deepseek-v4-flash', memoryEnabled:true, autoMemory:true, memoryLimit:200, memoryContextLimit:8, ttsEnabled:true, ttsVoice:'zh-CN-YunxiNeural', ttsRate:-10, ttsPitch:-18, robotIntensity:55 };
+
+function scheduleRecognitionRestart(delay=350){
+  clearTimeout(recognitionRestartTimer);
+  if(!listening||recognitionPausedForSpeech||!recognition)return;
+  recognitionRestartTimer=setTimeout(()=>{if(!listening||recognitionPausedForSpeech||recognitionActive)return;try{recognition.start()}catch{scheduleRecognitionRestart(700)}},delay);
+}
+
+function pauseRecognitionForJarvis(){
+  recognitionPausedForSpeech=true;clearTimeout(recognitionRestartTimer);
+  if(recognition&&recognitionActive)try{recognition.stop()}catch{}
+}
+
+function resumeRecognitionAfterJarvis(){
+  recognitionPausedForSpeech=false;
+  if(listening)scheduleRecognitionRestart(450);
+}
+
+function playBootSound(){
+  const AudioContext=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContext)return;
+  const ctx=new AudioContext(), master=ctx.createGain(), compressor=ctx.createDynamicsCompressor();
+  master.gain.setValueAtTime(.01,ctx.currentTime);master.gain.exponentialRampToValueAtTime(.7,ctx.currentTime+.04);master.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+3.5);master.connect(compressor);compressor.connect(ctx.destination);
+  const tone=(start,duration,from,to,type='sawtooth',volume=.15)=>{const o=ctx.createOscillator(),g=ctx.createGain(),f=ctx.createBiquadFilter();o.type=type;o.frequency.setValueAtTime(from,ctx.currentTime+start);o.frequency.exponentialRampToValueAtTime(to,ctx.currentTime+start+duration);f.type='lowpass';f.frequency.value=2200;g.gain.setValueAtTime(.001,ctx.currentTime+start);g.gain.exponentialRampToValueAtTime(volume,ctx.currentTime+start+.02);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+start+duration);o.connect(f);f.connect(g);g.connect(master);o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+duration+.02)};
+  const clang=(start,pitch)=>{const length=ctx.sampleRate*.18,buffer=ctx.createBuffer(1,length,ctx.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*.025));const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();src.buffer=buffer;filter.type='bandpass';filter.frequency.value=pitch;filter.Q.value=7;gain.gain.value=.65;src.connect(filter);filter.connect(gain);gain.connect(master);src.start(ctx.currentTime+start)};
+  tone(0,.45,70,230,'sawtooth',.28);clang(.12,520);clang(.36,760);clang(.62,960);
+  tone(.48,.8,110,520,'square',.12);clang(.92,1350);clang(1.12,830);
+  tone(1.05,1.55,180,1450,'sawtooth',.16);tone(1.12,1.45,90,720,'sine',.28);
+  clang(1.55,1700);clang(1.78,2100);clang(2.02,2600);
+  tone(2.05,1.15,240,80,'sine',.55);tone(2.12,.85,820,1550,'triangle',.12);clang(2.74,440);
+}
+
+function bootJarvis(){
+  const screen=$('#bootScreen'),status=$('#bootStatus'),button=$('#bootButton');button.disabled=true;playBootSound();screen.classList.add('booting');
+  const steps=[[200,'验证完成'],[650,'装甲协议载入'],[1100,'神经核心同步'],[1650,'能源矩阵上线'],[2250,'所有系统正常'],[2900,'欢迎回来']];
+  steps.forEach(([delay,text])=>setTimeout(()=>status.textContent=text,delay));
+  setTimeout(()=>{screen.classList.add('complete');setTimeout(()=>screen.remove(),750)},3200);
+}
+
+$('#bootButton').onclick=bootJarvis;
+const history = [{ role: 'system', content: '你是 JARVIS，一个原创的中文私人智能助理。表达沉稳、克制、机敏，带英式管家般的礼貌和轻微幽默，但不模仿任何真实演员或电影角色。回答简洁自然。你可以记录备忘、设置计时器、读取时间、经用户确认后打开网站。你拥有长期记忆工具：当用户明确说“记住”或提供明显长期稳定的称呼、偏好、习惯、目标时，调用 save_memory；不要保存密码、密钥、验证码、支付信息或未经用户同意的敏感数据。任何高影响操作必须先取得确认。' }];
+
+const addTranscript = (who, text) => {
+  const p = document.createElement('p');
+  p.innerHTML = `<b>${who}</b><span></span>`;
+  p.querySelector('span').textContent = text;
+  $('#transcript').append(p); $('#transcript').scrollTop = $('#transcript').scrollHeight;
+};
+
+const showToast = (text) => { $('#toast').textContent = text; $('#toast').classList.add('show'); setTimeout(()=>$('#toast').classList.remove('show'), 2800); };
+
+const addTask = (name, status = '已完成') => {
+  if ($('#tasks .empty')) $('#tasks').innerHTML = '';
+  const row = document.createElement('div'); row.className = 'task';
+  row.innerHTML = `<i></i><div><b></b><small>${status}</small></div><span>✓</span>`;
+  row.querySelector('b').textContent = name; $('#tasks').prepend(row);
+};
+
+const toolDefinitions = [
+  {type:'function',function:{name:'create_note',description:'在本地记录备忘或想法',parameters:{type:'object',properties:{content:{type:'string'}},required:['content']}}},
+  {type:'function',function:{name:'set_timer',description:'设置倒计时器',parameters:{type:'object',properties:{minutes:{type:'number',minimum:.1,maximum:180},label:{type:'string'}},required:['minutes','label']}}},
+  {type:'function',function:{name:'get_local_time',description:'读取用户本地日期和时间',parameters:{type:'object',properties:{}}}},
+  {type:'function',function:{name:'open_website',description:'打开用户明确要求的 HTTPS 网站',parameters:{type:'object',properties:{url:{type:'string'},reason:{type:'string'}},required:['url','reason']}}},
+  {type:'function',function:{name:'save_memory',description:'保存用户明确要求记住的长期称呼、偏好、习惯或目标。禁止保存密码、密钥和支付信息',parameters:{type:'object',properties:{content:{type:'string'},category:{type:'string',enum:['identity','preference','habit','goal','relationship','general']}},required:['content','category']}}},
+  {type:'function',function:{name:'recall_memories',description:'检索与当前话题有关的长期记忆',parameters:{type:'object',properties:{query:{type:'string'}},required:['query']}}},
+  {type:'function',function:{name:'forget_memory',description:'按关键词查找并忘记一条长期记忆，执行前必须由用户确认',parameters:{type:'object',properties:{query:{type:'string'}},required:['query']}}}
+];
+
+async function executeTool(name, args) {
+  if(name==='create_note'){ localStorage.setItem(`jarvis-note-${Date.now()}`,args.content); addTask(`已记录：${args.content}`); return `已经记录：${args.content}`; }
+  if(name==='set_timer'){ const m=Math.max(.1,Math.min(180,Number(args.minutes))); const label=args.label||'计时器'; addTask(`${label} · ${m} 分钟`,'计时中'); setTimeout(()=>{showToast(`${label}时间到了`); speak(`${label}时间到了`);},m*60000); return `${label}已设置为${m}分钟`; }
+  if(name==='get_local_time') return new Date().toLocaleString('zh-CN');
+  if(name==='open_website'){ if(!String(args.url).startsWith('https://')) return '出于安全考虑，只能打开 HTTPS 网站'; if(confirm(`JARVIS 请求打开网站：\n${args.url}\n原因：${args.reason}`)){window.open(args.url,'_blank','noopener');addTask(`打开网站：${new URL(args.url).hostname}`);return '网站已打开';} return '用户取消了操作'; }
+  if(name==='save_memory'){const response=await fetch('/api/memories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:args.content,category:args.category})});const data=await response.json();if(!response.ok)return data.error||'记忆保存失败';updateMemoryCount();addTask(`长期记忆：${args.content}`);return data.duplicate?'这条内容已经在长期记忆中':'已经写入长期记忆';}
+  if(name==='recall_memories'){const response=await fetch(`/api/memories?query=${encodeURIComponent(args.query)}`);const data=await response.json();return data.memories?.length?data.memories.map((m,i)=>`${i+1}. [${m.category}] ${m.content}`).join('\n'):'没有找到相关长期记忆';}
+  if(name==='forget_memory'){const response=await fetch(`/api/memories?query=${encodeURIComponent(args.query)}`);const data=await response.json();const memory=data.memories?.[0];if(!memory)return '没有找到相关记忆';if(!confirm(`JARVIS 请求忘记这条记忆：\n“${memory.content}”`))return '用户取消了删除';const deleted=await fetch(`/api/memories/${memory.id}`,{method:'DELETE'});if(!deleted.ok)return '删除记忆失败';updateMemoryCount();addTask(`已忘记：${memory.content}`);return '已经忘记这条记忆';}
+  return '未知工具';
+}
+
+async function updateMemoryCount(){try{const data=await(await fetch('/api/memories')).json();if($('#memoryCount'))$('#memoryCount').textContent=data.total||0}catch{}}
+
+async function relevantMemoryContext(query){
+  if(!appSettings.memoryEnabled)return null;
+  try{const data=await(await fetch(`/api/memories?query=${encodeURIComponent(query)}`)).json();if(!data.memories?.length)return null;return `以下是仅供本轮参考的用户长期记忆：\n${data.memories.map(m=>`- [${m.category}] ${m.content}`).join('\n')}`}
+  catch{return null}
+}
+
+async function loadSettings(){
+  try{const data=await(await fetch('/api/settings')).json();appSettings={...appSettings,...data.settings};$('#settingModel').value=appSettings.model;$('#settingMemoryEnabled').checked=appSettings.memoryEnabled;$('#settingAutoMemory').checked=appSettings.autoMemory;$('#settingMemoryLimit').value=appSettings.memoryLimit;$('#settingMemoryContext').value=appSettings.memoryContextLimit;$('#settingTtsEnabled').checked=appSettings.ttsEnabled;$('#settingVoice').value=appSettings.ttsVoice;$('#settingRate').value=appSettings.ttsRate;$('#settingPitch').value=appSettings.ttsPitch;$('#settingRobot').value=appSettings.robotIntensity;$('#apiKeyState').textContent=data.apiKeyConfigured?'DEEPSEEK API 已连接':'DEEPSEEK API 未配置';updateRangeLabels();}
+  catch{$('#settingsStatus').textContent='设置读取失败'}
+}
+
+function updateRangeLabels(){$('#rateValue').textContent=`${Number($('#settingRate').value)>=0?'+':''}${$('#settingRate').value}%`;$('#pitchValue').textContent=`${Number($('#settingPitch').value)>=0?'+':''}${$('#settingPitch').value}Hz`;$('#robotValue').textContent=`${$('#settingRobot').value}%`}
+
+async function renderSettingsMemories(){
+  const list=$('#settingsMemoryList');list.innerHTML='<p class="loading-memory">读取记忆中…</p>';
+  try{const data=await(await fetch('/api/memories?limit=50')).json();list.innerHTML=data.memories?.length?'':'<p class="loading-memory">还没有长期记忆</p>';data.memories?.forEach(memory=>{const row=document.createElement('div');row.innerHTML=`<i></i><p><b></b><small></small></p><button title="删除记忆">×</button>`;row.querySelector('b').textContent=memory.content;row.querySelector('small').textContent=`${memory.category} · ${new Date(memory.createdAt).toLocaleDateString('zh-CN')}`;row.querySelector('button').onclick=async()=>{if(!confirm(`确定忘记：\n“${memory.content}”`))return;await fetch(`/api/memories/${memory.id}`,{method:'DELETE'});renderSettingsMemories();updateMemoryCount()};list.append(row)})}catch{list.innerHTML='<p class="loading-memory">记忆读取失败</p>'}
+}
+
+function openSettings(){const modal=$('#settingsModal');modal.classList.add('open');modal.setAttribute('aria-hidden','false');loadSettings();renderSettingsMemories()}
+function closeSettings(){const modal=$('#settingsModal');modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
+
+async function saveSettings(){
+  const next={model:$('#settingModel').value,memoryEnabled:$('#settingMemoryEnabled').checked,autoMemory:$('#settingAutoMemory').checked,memoryLimit:Number($('#settingMemoryLimit').value),memoryContextLimit:Number($('#settingMemoryContext').value),ttsEnabled:$('#settingTtsEnabled').checked,ttsVoice:$('#settingVoice').value,ttsRate:Number($('#settingRate').value),ttsPitch:Number($('#settingPitch').value),robotIntensity:Number($('#settingRobot').value)};
+  $('#settingsStatus').textContent='正在同步设置…';try{const response=await fetch('/api/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(next)});const data=await response.json();if(!response.ok)throw new Error(data.error);appSettings=data.settings;$('#settingsStatus').textContent='设置已保存并立即生效';showToast('JARVIS 设置已更新');setTimeout(closeSettings,650)}catch(e){$('#settingsStatus').textContent=e.message||'保存失败'}
+}
+
+async function speak(text){
+  try{
+    pauseRecognitionForJarvis();
+    if(currentAudio){try{currentAudio.stop?.()}catch{}currentAudio=null}
+    if(speechAudioContext){try{await speechAudioContext.close()}catch{}speechAudioContext=null}
+    if(currentAudioUrl){URL.revokeObjectURL(currentAudioUrl);currentAudioUrl=null}
+    document.body.classList.add('speaking'); $('#statusText').textContent='JARVIS 正在回应…';
+    const response=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    if(!response.ok){const error=await response.json().catch(()=>({}));throw new Error(error.error||'语音合成失败')}
+    const AudioContext=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContext)throw new Error('当前浏览器不支持音频处理');
+    speechAudioContext=new AudioContext();
+    const buffer=await speechAudioContext.decodeAudioData(await response.arrayBuffer());
+    const source=speechAudioContext.createBufferSource(),highpass=speechAudioContext.createBiquadFilter(),presence=speechAudioContext.createBiquadFilter(),robotGain=speechAudioContext.createGain(),compressor=speechAudioContext.createDynamicsCompressor(),dry=speechAudioContext.createGain(),delay=speechAudioContext.createDelay(.2),echo=speechAudioContext.createGain();
+    source.buffer=buffer;source.playbackRate.value=.96;highpass.type='highpass';highpass.frequency.value=170;presence.type='peaking';presence.frequency.value=1450;presence.Q.value=1.4;presence.gain.value=5;robotGain.gain.value=.72;dry.gain.value=.9;delay.delayTime.value=.045;echo.gain.value=.18;compressor.threshold.value=-22;compressor.knee.value=12;compressor.ratio.value=5;compressor.attack.value=.006;compressor.release.value=.16;
+    const modulator=speechAudioContext.createOscillator(),modDepth=speechAudioContext.createGain();const robotMix=(appSettings.robotIntensity||0)/100;modulator.type='square';modulator.frequency.value=24+robotMix*18;modDepth.gain.value=robotMix*.34;echo.gain.value=robotMix*.3;presence.gain.value=robotMix*8;modulator.connect(modDepth);modDepth.connect(robotGain.gain);
+    source.connect(highpass);highpass.connect(presence);presence.connect(robotGain);robotGain.connect(dry);dry.connect(compressor);robotGain.connect(delay);delay.connect(echo);echo.connect(compressor);compressor.connect(speechAudioContext.destination);
+    currentAudio=source;source.onended=()=>{document.body.classList.remove('speaking');try{modulator.stop()}catch{}currentAudio=null;resumeRecognitionAfterJarvis();$('#statusText').textContent=listening?'正在聆听，请下达指令':'点击核心唤醒 JARVIS'};
+    modulator.start();source.start();
+  }catch(e){document.body.classList.remove('speaking');resumeRecognitionAfterJarvis();showToast(e.message)}
+}
+
+async function connectVoice() {
+  if(listening){ listening=false;recognitionPausedForSpeech=false;clearTimeout(recognitionRestartTimer);try{recognition?.stop()}catch{}setConnected(false); return; }
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){ showToast('当前浏览器不支持语音识别，请使用 Chrome 或 Edge'); return; }
+  recognition=new SpeechRecognition(); recognition.lang='zh-CN'; recognition.continuous=true; recognition.interimResults=true;
+  recognition.onstart=()=>{recognitionActive=true;setConnected(true)};
+  recognition.onresult=e=>{let final='';for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)final+=e.results[i][0].transcript;if(final){pauseRecognitionForJarvis();sendText(final)}};
+  recognition.onerror=e=>{recognitionActive=false;if(!['no-speech','aborted'].includes(e.error))showToast(`语音识别：${e.error}`)};
+  recognition.onend=()=>{recognitionActive=false;if(listening&&!recognitionPausedForSpeech)scheduleRecognitionRestart()};
+  listening=true;recognitionPausedForSpeech=false;recognition.start();
+}
+
+function setConnected(value) {
+  connected = value; document.body.classList.toggle('connected', value);
+  $('#voiceLink').textContent = value ? 'LINKED' : 'STANDBY'; $('#voiceBar').style.width = value ? '96%' : '26%';
+  $('#statusText').textContent = value ? '正在聆听，请下达指令' : '点击核心唤醒 JARVIS';
+  $('#activate b').textContent = value ? '关闭语音链路' : '启动语音链路'; if(value) startedAt = Date.now();
+}
+
+function sendText(text) {
+  if (!text.trim()) return; addTranscript('YOU', text); $('#command').value = '';
+  askDeepSeek(text);
+}
+
+async function askDeepSeek(text){
+  if(listening)pauseRecognitionForJarvis();
+  const started=performance.now(); history.push({role:'user',content:text}); $('#statusText').textContent='DeepSeek 正在思考…';
+  try{
+    const memoryContext=await relevantMemoryContext(text);const memoryPolicy=`长期记忆当前${appSettings.memoryEnabled?'开启':'关闭'}，自动记忆${appSettings.autoMemory?'开启':'关闭'}。${appSettings.autoMemory?'可按规则主动保存稳定偏好。':'除非用户明确说“记住”，否则不要保存。'}`;const requestMessages=[...history.slice(0,-1),{role:'system',content:memoryPolicy},...(memoryContext?[{role:'system',content:memoryContext}]:[]),history.at(-1)];const activeTools=appSettings.memoryEnabled?toolDefinitions:toolDefinitions.filter(tool=>!['save_memory','recall_memories','forget_memory'].includes(tool.function.name));
+    let response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:requestMessages,tools:activeTools})}); let data=await response.json();
+    if(!response.ok) throw new Error(data.error||data.message||'DeepSeek 请求失败');
+    let message=data.choices?.[0]?.message; if(!message) throw new Error('DeepSeek 未返回内容'); history.push(message);
+    if(message.tool_calls?.length){for(const call of message.tool_calls){let args={};try{args=JSON.parse(call.function.arguments||'{}')}catch{}const result=await executeTool(call.function.name,args);history.push({role:'tool',tool_call_id:call.id,content:String(result)})} response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});data=await response.json();if(!response.ok)throw new Error(data.error||'工具结果处理失败');message=data.choices?.[0]?.message;history.push(message)}
+    const answer=message.content||'任务已经处理完成。'; addTranscript('JARVIS',answer); speak(answer); $('#latency').textContent=`${Math.round(performance.now()-started)} ms`; $('#statusText').textContent=listening?'正在聆听，请下达指令':'点击核心唤醒 JARVIS';
+  }catch(e){resumeRecognitionAfterJarvis();if(e.message.includes('DEEPSEEK_API_KEY')){addTask(text,'演示模式');addTranscript('JARVIS',`已收到：“${text}”。配置 DeepSeek API Key 后即可由模型处理。`)}else addTranscript('JARVIS',`连接出现问题：${e.message}`);showToast(e.message);$('#statusText').textContent='DeepSeek 链路未连接';}
+}
+
+$('#activate').onclick = connectVoice; $('#orb').onclick = connectVoice; $('#send').onclick = ()=>sendText($('#command').value);
+$('#command').onkeydown = e => { if(e.key==='Enter') sendText(e.target.value); };
+document.querySelectorAll('.quick').forEach(b=>b.onclick=()=>sendText(b.dataset.command));
+updateMemoryCount();
+loadSettings();
+$('#settingsNav').onclick=openSettings;$('#closeSettings').onclick=closeSettings;$('#saveSettings').onclick=saveSettings;$('#settingsModal').onclick=e=>{if(e.target===$('#settingsModal'))closeSettings()};
+document.querySelectorAll('[data-settings-tab]').forEach(button=>button.onclick=()=>{document.querySelectorAll('[data-settings-tab]').forEach(x=>x.classList.toggle('active',x===button));document.querySelectorAll('[data-settings-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.settingsPane===button.dataset.settingsTab))});
+['#settingRate','#settingPitch','#settingRobot'].forEach(selector=>$(selector).oninput=updateRangeLabels);
+$('#testVoice').onclick=()=>speak('晚上好。JARVIS 语音系统已按照当前参数运行。');
+$('#clearMemories').onclick=async()=>{if(!confirm('确定清空全部长期记忆吗？此操作无法撤销。'))return;await fetch('/api/memories',{method:'DELETE'});renderSettingsMemories();updateMemoryCount();showToast('长期记忆已清空')};
+
+setInterval(()=>{
+  const now = new Date(); $('#clock').textContent = now.toLocaleTimeString('zh-CN',{hour12:false});
+  $('#date').textContent = now.toLocaleDateString('zh-CN');
+  if(connected) { const s=Math.floor((Date.now()-startedAt)/1000); $('#duration').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+},1000);
+
+const canvas=$('#matrix'), ctx=canvas.getContext('2d'); let particles=[];
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;particles=Array.from({length:Math.min(80,innerWidth/18)},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,v:.15+Math.random()*.35,r:Math.random()*1.4}));} resize(); addEventListener('resize',resize);
+(function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#36d9ff';particles.forEach(p=>{p.y-=p.v;if(p.y<0)p.y=canvas.height;ctx.globalAlpha=.15;ctx.fillRect(p.x,p.y,p.r,p.r*6)});requestAnimationFrame(draw)})();
