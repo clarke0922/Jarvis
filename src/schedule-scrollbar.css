@@ -1,30 +1,162 @@
-.schedule-create,
+/* Schedule center layout refinement: keep creation controls fully visible and
+   move calendar exchange into the main toolbar. */
+.schedule-layout {
+  grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.schedule-create {
+  overflow: hidden;
+  padding: 18px 20px;
+}
+
+.schedule-create h3 {
+  margin-bottom: 10px;
+}
+
+.schedule-create label {
+  margin: 7px 0;
+}
+
+.schedule-create input,
+.schedule-create select,
+.schedule-create textarea {
+  margin-top: 4px;
+  padding: 7px 9px;
+}
+
+.schedule-create textarea {
+  min-height: 52px;
+}
+
+.schedule-submit {
+  margin-top: 6px;
+  padding: 9px;
+}
+
+.schedule-list-zone {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 20px;
+}
+
+.schedule-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 48px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(85, 211, 242, 0.13);
+}
+
+.schedule-filters {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.calendar-sync {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.calendar-sync > span {
+  min-width: 0;
+  text-align: right;
+}
+
+.calendar-sync b {
+  display: block;
+  color: #76c5d7;
+  font: 500 8px Orbitron;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+}
+
+.calendar-sync small {
+  display: block;
+  max-width: 260px;
+  margin: 3px 0 0;
+  overflow: hidden;
+  color: #416b7a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-sync > div {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.calendar-sync button {
+  min-width: 82px;
+  padding: 7px 10px;
+  border: 1px solid rgba(85, 211, 242, 0.28);
+  background: linear-gradient(180deg, rgba(30, 105, 132, 0.2), rgba(8, 31, 43, 0.35));
+  color: #9de4ef;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.calendar-sync button:hover {
+  border-color: #53d6ef;
+  background: rgba(45, 177, 210, 0.15);
+  color: #e1fbff;
+  box-shadow: 0 0 12px rgba(72, 201, 229, 0.16);
+}
+
 .schedule-list {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  margin-top: 12px;
+  overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(83, 214, 239, 0.58) rgba(5, 20, 29, 0.7);
+  scrollbar-color: rgba(83, 214, 239, 0.5) transparent;
 }
 
-.schedule-create::-webkit-scrollbar,
 .schedule-list::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
 }
 
-.schedule-create::-webkit-scrollbar-track,
 .schedule-list::-webkit-scrollbar-track {
-  background: rgba(5, 20, 29, 0.7);
-  border-left: 1px solid rgba(85, 211, 242, 0.08);
+  background: transparent;
 }
 
-.schedule-create::-webkit-scrollbar-thumb,
 .schedule-list::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(105, 226, 248, 0.7), rgba(24, 111, 139, 0.75));
-  border: 1px solid rgba(154, 239, 255, 0.35);
+  background: rgba(83, 214, 239, 0.45);
   border-radius: 0;
-  box-shadow: 0 0 8px rgba(72, 201, 229, 0.28);
 }
 
-.schedule-create::-webkit-scrollbar-thumb:hover,
-.schedule-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(105, 226, 248, 0.85);
+@media (max-width: 900px) {
+  .schedule-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .calendar-sync {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .schedule-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-create {
+    overflow: visible;
+  }
+
+  .calendar-sync > span {
+    text-align: left;
+  }
 }

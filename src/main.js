@@ -144,9 +144,8 @@ app.innerHTML = `
             <label>备注<textarea id="scheduleNotes" rows="3" maxlength="1000"></textarea></label>
             <button class="schedule-submit" type="submit">加入任务中心</button>
           </form>
-          <div class="calendar-sync"><h3>CALENDAR // 日历同步</h3><div><button id="calendarImport">导入 .ICS</button><button id="calendarExport">导出 .ICS</button><input id="calendarFile" type="file" accept=".ics,text/calendar" hidden></div><small>兼容 Google、Outlook 与 Apple Calendar</small></div>
         </aside>
-        <main class="schedule-list-zone"><nav class="schedule-filters"><button class="active" data-filter="active">待办</button><button data-filter="today">今天</button><button data-filter="all">全部</button></nav><div id="scheduleList" class="schedule-list"></div></main>
+        <main class="schedule-list-zone"><div class="schedule-toolbar"><nav class="schedule-filters"><button class="active" data-filter="active">待办</button><button data-filter="today">今天</button><button data-filter="all">全部</button></nav><div class="calendar-sync"><span><b>CALENDAR // 日历同步</b><small>兼容 Google、Outlook 与 Apple Calendar</small></span><div><button id="calendarImport">导入 .ICS</button><button id="calendarExport">导出 .ICS</button><input id="calendarFile" type="file" accept=".ics,text/calendar" hidden></div></div></div><div id="scheduleList" class="schedule-list"></div></main>
       </div>
     </section>
   </div>
