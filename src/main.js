@@ -12,6 +12,7 @@ import './schedule-scrollbar.css';
 import './workspace-center.css';
 import './knowledge-center.css';
 import './task-center.css';
+import './task-editor-refinement.css';
 import { initTaskCenter, refreshTaskCenter } from './task-center.js';
 import { getLanguage, getLanguagePreference, locale, localizeDom, setLanguage, tr } from './i18n.js';
 import './login-motion.css';
