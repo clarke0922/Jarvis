@@ -1,0 +1,30 @@
+.schedule-create,
+.schedule-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(83, 214, 239, 0.58) rgba(5, 20, 29, 0.7);
+}
+
+.schedule-create::-webkit-scrollbar,
+.schedule-list::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.schedule-create::-webkit-scrollbar-track,
+.schedule-list::-webkit-scrollbar-track {
+  background: rgba(5, 20, 29, 0.7);
+  border-left: 1px solid rgba(85, 211, 242, 0.08);
+}
+
+.schedule-create::-webkit-scrollbar-thumb,
+.schedule-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(105, 226, 248, 0.7), rgba(24, 111, 139, 0.75));
+  border: 1px solid rgba(154, 239, 255, 0.35);
+  border-radius: 0;
+  box-shadow: 0 0 8px rgba(72, 201, 229, 0.28);
+}
+
+.schedule-create::-webkit-scrollbar-thumb:hover,
+.schedule-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(105, 226, 248, 0.85);
+}
