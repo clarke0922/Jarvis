@@ -1,0 +1,81 @@
+.right-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.right-panel .tasks {
+  flex: 0 0 auto;
+  max-height: 185px;
+}
+
+.right-panel .panel-title.second {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+
+.right-panel .transcript {
+  flex: 1 1 auto;
+  width: calc(100% + 8px);
+  height: auto;
+  min-height: 0;
+  margin-right: -8px;
+  padding: 0 8px 0 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(91, 220, 242, 0.56) rgba(4, 17, 27, 0.42);
+}
+
+.right-panel .transcript::-webkit-scrollbar {
+  width: 6px;
+}
+
+.right-panel .transcript::-webkit-scrollbar-track {
+  background: rgba(4, 17, 27, 0.42);
+  border-left: 1px solid rgba(86, 211, 255, 0.07);
+}
+
+.right-panel .transcript::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(108, 229, 249, 0.68), rgba(29, 116, 145, 0.72));
+  border: 1px solid rgba(157, 236, 250, 0.28);
+  border-radius: 0;
+  box-shadow: 0 0 8px rgba(72, 220, 255, 0.2);
+}
+
+.right-panel .transcript::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 229, 249, 0.82);
+}
+
+.right-panel .transcript p {
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 9px 10px 10px;
+  overflow-wrap: anywhere;
+  background: linear-gradient(90deg, rgba(21, 78, 101, 0.2), rgba(7, 28, 42, 0.08));
+  border: 1px solid rgba(86, 211, 255, 0.08);
+  border-left: 2px solid rgba(72, 220, 255, 0.55);
+}
+
+.right-panel .transcript p:last-child {
+  margin-bottom: 0;
+}
+
+.right-panel .transcript b {
+  margin-bottom: 6px;
+}
+
+.right-panel .transcript span {
+  display: block;
+  width: 100%;
+  color: #8bb8c7;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .right-panel .transcript {
+    width: 100%;
+    min-height: 230px;
+    margin-right: 0;
+  }
+}
