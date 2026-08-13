@@ -69,6 +69,7 @@ Object.assign(messages.en, {
   '加入任务中心': 'Add to task center',
   '导入 .ICS': 'Import .ICS',
   '导出 .ICS': 'Export .ICS',
+  '导入日历文件': 'Import calendar file',
   '兼容 Google、Outlook 与 Apple Calendar': 'Compatible with Google, Outlook, and Apple Calendar',
   '当前视图没有任务': 'No tasks in this view',
   '无截止时间': 'No due date',

@@ -104,6 +104,30 @@
   white-space: nowrap;
 }
 
+.calendar-sync button i {
+  margin-right: 5px;
+  color: #5bdcf2;
+  font-style: normal;
+  text-shadow: 0 0 8px rgba(91, 220, 242, 0.55);
+}
+
+.calendar-file-control,
+.calendar-file-control:not([hidden]) {
+  display: none !important;
+  position: fixed !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+}
+
 .calendar-sync button:hover {
   border-color: #53d6ef;
   background: rgba(45, 177, 210, 0.15);
