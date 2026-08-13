@@ -1,0 +1,25 @@
+/* Final cross-surface visual pass: consistent focus, selection, scrolling and fill. */
+::selection { color:#eaffff; background:rgba(21,174,218,.48) }
+button,input,select,textarea { min-width:0 }
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible { outline:1px solid #55dff7; outline-offset:2px; box-shadow:0 0 0 3px rgba(85,223,247,.1),0 0 16px rgba(85,223,247,.16) }
+
+.settings-content,.settings-memory-list,.workspace-list,.workspace-detail,.knowledge-list,.knowledge-results,.task-center,.calendar-panel,.agenda-panel,.tasks { scrollbar-width:thin; scrollbar-color:rgba(72,220,255,.62) rgba(7,27,39,.42) }
+.settings-content::-webkit-scrollbar,.settings-memory-list::-webkit-scrollbar,.workspace-list::-webkit-scrollbar,.workspace-detail::-webkit-scrollbar,.knowledge-list::-webkit-scrollbar,.knowledge-results::-webkit-scrollbar,.task-center::-webkit-scrollbar,.calendar-panel::-webkit-scrollbar,.agenda-panel::-webkit-scrollbar,.tasks::-webkit-scrollbar { width:6px; height:6px }
+.settings-content::-webkit-scrollbar-track,.settings-memory-list::-webkit-scrollbar-track,.workspace-list::-webkit-scrollbar-track,.workspace-detail::-webkit-scrollbar-track,.knowledge-list::-webkit-scrollbar-track,.knowledge-results::-webkit-scrollbar-track,.task-center::-webkit-scrollbar-track,.calendar-panel::-webkit-scrollbar-track,.agenda-panel::-webkit-scrollbar-track,.tasks::-webkit-scrollbar-track { background:rgba(7,27,39,.42) }
+.settings-content::-webkit-scrollbar-thumb,.settings-memory-list::-webkit-scrollbar-thumb,.workspace-list::-webkit-scrollbar-thumb,.workspace-detail::-webkit-scrollbar-thumb,.knowledge-list::-webkit-scrollbar-thumb,.knowledge-results::-webkit-scrollbar-thumb,.task-center::-webkit-scrollbar-thumb,.calendar-panel::-webkit-scrollbar-thumb,.agenda-panel::-webkit-scrollbar-thumb,.tasks::-webkit-scrollbar-thumb { border:1px solid rgba(3,12,19,.7); background:linear-gradient(#86efff,#168eb8); box-shadow:0 0 8px rgba(72,220,255,.42) }
+
+.task-center.open { display:flex; min-height:100dvh; flex-direction:column; overflow:hidden }
+.task-center>header { flex:0 0 70px; width:min(1450px,100%); margin:0 auto 18px }
+.planner-layout { width:100%; min-height:0; flex:1; align-items:stretch }
+.calendar-panel,.agenda-panel { min-height:0; overflow:auto }
+.agenda-panel { display:flex; flex-direction:column }
+.agenda-columns { min-height:0; flex:1 }
+
+.settings-shell>header button,.workspace-shell>header button,.knowledge-shell>header button,.task-center>header>button,.editor form>header button { transition:color .18s,border-color .18s,background .18s,transform .18s,box-shadow .18s }
+.settings-shell>header button:hover,.workspace-shell>header button:hover,.knowledge-shell>header button:hover,.task-center>header>button:hover,.editor form>header button:hover { color:#e5fbff; border-color:rgba(85,223,247,.72); background:rgba(32,149,185,.14); box-shadow:0 0 14px rgba(85,223,247,.14); transform:rotate(3deg) }
+
+@media(max-width:900px){
+  .task-center.open { overflow:auto }
+  .planner-layout { flex:none }
+  .calendar-panel,.agenda-panel { overflow:visible }
+}

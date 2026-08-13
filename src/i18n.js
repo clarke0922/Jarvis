@@ -83,6 +83,24 @@ Object.assign(messages.en, {
   '全部': 'All'
 });
 
+Object.assign(messages.en, {
+  '通用管家': 'General Assistant',
+  '日常对话与综合协助': 'Everyday conversation and general assistance',
+  '分析师': 'Analyst',
+  '严谨拆解、研究与决策': 'Structured analysis, research and decisions',
+  '创意伙伴': 'Creative Partner',
+  '写作、构思与内容创作': 'Writing, ideation and content creation',
+  '执行官': 'Executive',
+  '任务导向、计划与推进': 'Task-focused planning and delivery',
+  '临时会话': 'Temporary session',
+  '还没有已保存的工作区': 'No saved workspaces yet',
+  '暂无消息': 'No messages yet',
+  '工作区读取失败': 'Failed to load workspaces',
+  '删除': 'Delete',
+  'ASSISTANT MODE // 助手模式': 'ASSISTANT MODE // PROFILES',
+  '保存后，JARVIS 会在每次回答完成时自动更新该工作区。再次打开即可恢复完整上下文并继续工作。': 'Once saved, JARVIS updates this workspace after every response. Reopen it anytime to restore the full context and continue working.'
+});
+
 const supported = ['zh-CN', 'en'];
 const browserLanguage = () => (navigator.languages || [navigator.language]).some(value => value?.toLowerCase().startsWith('zh')) ? 'zh-CN' : 'en';
 let preference = localStorage.getItem('jarvis-language') || 'auto';
