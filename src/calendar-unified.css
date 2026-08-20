@@ -1,0 +1,159 @@
+/* Shared calendar language for the planner grid and every date/time field. */
+:root {
+  --calendar-line: rgba(85, 211, 242, 0.2);
+  --calendar-line-strong: rgba(85, 223, 247, 0.68);
+  --calendar-surface: rgba(5, 22, 34, 0.88);
+  --calendar-surface-hover: rgba(24, 112, 143, 0.24);
+  --calendar-cyan: #68e6fb;
+  --calendar-text: #c9f5fc;
+  --calendar-muted: #4e7b8d;
+}
+
+.calendar-panel {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(67, 194, 226, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(67, 194, 226, 0.025) 1px, transparent 1px),
+    linear-gradient(145deg, rgba(8, 29, 43, 0.96), rgba(3, 14, 23, 0.96));
+  background-size: 22px 22px, 22px 22px, auto;
+  border-color: var(--calendar-line);
+  box-shadow: inset 0 0 34px rgba(30, 151, 187, 0.05);
+}
+
+.calendar-panel::before,
+.calendar-panel::after {
+  position: absolute;
+  width: 34px;
+  height: 2px;
+  background: var(--calendar-cyan);
+  box-shadow: 0 0 10px rgba(104, 230, 251, 0.55);
+  content: '';
+}
+
+.calendar-panel::before { top: -1px; left: 18px; }
+.calendar-panel::after { right: 18px; bottom: -1px; }
+
+.calendar-nav {
+  min-height: 44px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--calendar-line);
+}
+
+.calendar-nav b {
+  color: var(--calendar-text);
+  font: 500 14px Orbitron, "Microsoft YaHei", sans-serif;
+  letter-spacing: 1.5px;
+}
+
+.calendar-nav button {
+  border-color: var(--calendar-line);
+  background: var(--calendar-surface);
+  color: var(--calendar-cyan);
+  font-size: 18px;
+  transition: 0.18s ease;
+}
+
+.calendar-nav button:hover {
+  border-color: var(--calendar-line-strong);
+  background: var(--calendar-surface-hover);
+  box-shadow: 0 0 14px rgba(85, 223, 247, 0.12);
+}
+
+.weekdays {
+  margin-top: 16px;
+  color: var(--calendar-muted);
+  font: 500 9px Orbitron, "Microsoft YaHei", sans-serif;
+  letter-spacing: 1px;
+}
+
+.calendar-grid {
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.calendar-grid button {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: rgba(4, 18, 28, 0.34);
+  color: #93c5d1;
+  transition: color 0.16s, border-color 0.16s, background 0.16s, box-shadow 0.16s, transform 0.16s;
+}
+
+.calendar-grid button:hover {
+  z-index: 1;
+  border-color: rgba(85, 223, 247, 0.45);
+  background: var(--calendar-surface-hover);
+  color: #e7fcff;
+  transform: translateY(-1px);
+}
+
+.calendar-grid .muted {
+  color: #31525f;
+  opacity: 0.48;
+}
+
+.calendar-grid .today::after {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffe17a;
+  box-shadow: 0 0 7px #ffe17a;
+  content: '';
+}
+
+.calendar-grid .selected {
+  border-color: var(--calendar-cyan);
+  background: linear-gradient(145deg, rgba(33, 173, 216, 0.55), rgba(10, 79, 112, 0.76));
+  color: #fff;
+  box-shadow: inset 0 0 14px rgba(109, 236, 255, 0.12), 0 0 16px rgba(72, 220, 255, 0.28);
+}
+
+.filters {
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--calendar-line);
+}
+
+.filters select,
+.schedule-create input[type="datetime-local"],
+.editor input[type="datetime-local"] {
+  min-height: 40px;
+  border-color: var(--calendar-line) !important;
+  background-color: var(--calendar-surface) !important;
+  color: var(--calendar-text) !important;
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  width: 16px;
+  height: 16px;
+  padding: 5px;
+  border-left: 1px solid var(--calendar-line);
+  filter: invert(88%) sepia(25%) saturate(900%) hue-rotate(153deg) brightness(102%);
+  cursor: pointer;
+  opacity: 0.82;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  filter: invert(94%) sepia(35%) saturate(1300%) hue-rotate(155deg) brightness(112%);
+}
+
+@media (max-width: 900px) {
+  .calendar-panel { min-height: 520px; overflow: visible; }
+  .calendar-grid button { min-height: 42px; aspect-ratio: auto; }
+}
+
+@media (max-width: 520px) {
+  .calendar-panel { min-height: 470px; padding: 14px; }
+  .calendar-grid { gap: 2px; }
+  .calendar-grid button { min-height: 38px; padding: 4px; }
+}

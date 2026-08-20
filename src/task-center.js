@@ -22,7 +22,8 @@ function shell() {
 function renderCalendar() {
   root.querySelector('[data-month]').textContent = state.cursor.toLocaleDateString(locale(), { year:'numeric', month:'long' });
   root.querySelector('.weekdays').innerHTML = (getLanguage() === 'en' ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] : ['一','二','三','四','五','六','日']).map(x => `<span>${x}</span>`).join('');
-  root.querySelector('[data-calendar]').innerHTML = monthCells(state.cursor.getFullYear(), state.cursor.getMonth()).map(cell => `<button class="${cell.currentMonth?'':'muted'} ${cell.key===state.selected?'selected':''}" data-day="${cell.key}">${cell.date.getDate()}</button>`).join('');
+  const today = dateKey(new Date());
+  root.querySelector('[data-calendar]').innerHTML = monthCells(state.cursor.getFullYear(), state.cursor.getMonth()).map(cell => `<button class="${cell.currentMonth?'':'muted'} ${cell.key===today?'today':''} ${cell.key===state.selected?'selected':''}" data-day="${cell.key}" aria-label="${cell.key}" ${cell.key===state.selected?'aria-current="date"':''}>${cell.date.getDate()}</button>`).join('');
 }
 
 function renderAgenda() {
