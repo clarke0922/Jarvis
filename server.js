@@ -20,8 +20,6 @@ const workspacesFile = path.join(memoryDir, 'workspaces.json');
 const knowledgeFile = path.join(memoryDir, 'knowledge.json');
 const knowledgeUploadDir = path.join(memoryDir, 'knowledge-files');
 const providerSecretsFile = path.join(memoryDir, 'provider-secrets.json');
-const tasksFile = path.join(memoryDir, 'tasks.json');
-const eventsFile = path.join(memoryDir, 'events.json');
 const defaultSettings = {
   model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
   provider: 'deepseek',
@@ -80,12 +78,6 @@ async function writeMemories(memories) {
   await writeFile(memoryFile, JSON.stringify(memories, null, 2), 'utf8');
 }
 
-async function readCollection(file) {
-  try { const value=JSON.parse(await readFile(file,'utf8')); return Array.isArray(value)?value:[]; }
-  catch(error){if(error.code==='ENOENT')return[];throw error;}
-}
-async function writeCollection(file,value){await mkdir(memoryDir,{recursive:true});await writeFile(file,JSON.stringify(value,null,2),'utf8');}
-
 async function readSchedules() {
   try { const value = JSON.parse(await readFile(schedulesFile, 'utf8')); return Array.isArray(value) ? value : []; }
   catch (error) { if (error.code === 'ENOENT') return []; throw error; }
@@ -117,6 +109,7 @@ async function extractDocument(buffer,ext){if(ext==='.pdf'){const parser=new PDF
 function normalizeSchedule(input, current = {}) {
   const repeat = ['none','daily','weekly','monthly'].includes(input.repeat) ? input.repeat : (current.repeat || 'none');
   const due = input.dueAt === null || input.dueAt === '' ? null : new Date(input.dueAt || current.dueAt || Date.now());
+  const completed = input.completed === undefined ? Boolean(current.completed) : Boolean(input.completed);
   return {
     ...current,
     title: String(input.title ?? current.title ?? '').trim().slice(0, 160),
@@ -125,7 +118,9 @@ function normalizeSchedule(input, current = {}) {
     priority: ['low','normal','high'].includes(input.priority) ? input.priority : (current.priority || 'normal'),
     repeat,
     reminderMinutes: Math.max(0, Math.min(10080, Number(input.reminderMinutes ?? current.reminderMinutes ?? 15))),
-    completed: input.completed === undefined ? Boolean(current.completed) : Boolean(input.completed),
+    completed,
+    status: completed ? 'completed' : 'pending',
+    kind: current.kind || 'task',
     source: String(input.source || current.source || 'local').slice(0, 30)
   };
 }
@@ -295,15 +290,27 @@ app.post('/api/knowledge/upload',knowledgeUpload.single('file'),async(req,res)=>
 app.get('/api/knowledge/search',async(req,res)=>{try{const query=String(req.query.query||'').trim().slice(0,500),limit=Math.max(1,Math.min(8,Number(req.query.limit||5))),terms=searchTerms(query),items=await readKnowledge(),matches=[];for(const item of items)for(const chunk of item.chunks||[]){const text=chunk.content.toLowerCase();let score=terms.reduce((total,term)=>total+(text.includes(term)?2:0),0);if(query&&text.includes(query.toLowerCase()))score+=6;if(score>0)matches.push({documentId:item.id,source:item.name,type:item.type,chunk:chunk.index,content:chunk.content,score});}matches.sort((a,b)=>b.score-a.score);res.json({matches:matches.slice(0,limit),query});}catch(error){res.status(500).json({error:'知识库检索失败',detail:error.message});}});
 app.delete('/api/knowledge/:id',async(req,res)=>{try{const items=await readKnowledge(),item=items.find(x=>x.id===req.params.id);if(!item)return res.status(404).json({error:'没有找到该文档'});await writeKnowledge(items.filter(x=>x.id!==req.params.id));try{await unlink(path.join(knowledgeUploadDir,item.storedName))}catch{}res.json({deleted:true});}catch(error){res.status(500).json({error:'删除文档失败',detail:error.message});}});
 
-app.get('/api/tasks',async(req,res)=>{try{const tasks=filterTasks(await readCollection(tasksFile),req.query);res.json({tasks:tasks.sort((a,b)=>String(a.dueAt||'').localeCompare(String(b.dueAt||''))),total:tasks.length});}catch(error){res.status(500).json({error:'读取任务失败',detail:error.message});}});
-app.post('/api/tasks',async(req,res)=>{try{const parsed=validateTask(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});const tasks=await readCollection(tasksFile),now=new Date().toISOString(),task={id:crypto.randomUUID(),...parsed.value,createdAt:now,updatedAt:now};tasks.push(task);await writeCollection(tasksFile,tasks);res.status(201).json({task});}catch(error){res.status(500).json({error:'保存任务失败',detail:error.message});}});
-app.put('/api/tasks/:id',async(req,res)=>{try{const tasks=await readCollection(tasksFile),index=tasks.findIndex(item=>item.id===req.params.id);if(index<0)return res.status(404).json({error:'没有找到该任务'});const parsed=validateTask(req.body||{},tasks[index]);if(parsed.error)return res.status(400).json({error:parsed.error});tasks[index]={...tasks[index],...parsed.value,updatedAt:new Date().toISOString()};await writeCollection(tasksFile,tasks);res.json({task:tasks[index]});}catch(error){res.status(500).json({error:'更新任务失败',detail:error.message});}});
-app.delete('/api/tasks/:id',async(req,res)=>{try{const tasks=await readCollection(tasksFile),next=tasks.filter(item=>item.id!==req.params.id);if(next.length===tasks.length)return res.status(404).json({error:'没有找到该任务'});await writeCollection(tasksFile,next);res.json({deleted:true,total:next.length});}catch(error){res.status(500).json({error:'删除任务失败',detail:error.message});}});
+app.get('/api/tasks',async(req,res)=>{try{
+  const tasks=(await readSchedules()).filter(item=>item.kind!=='event').map(item=>({...item,status:item.completed?'completed':'pending',priority:item.priority==='normal'?'medium':item.priority}));
+  const filtered=filterTasks(tasks,req.query).sort((a,b)=>String(a.dueAt||'').localeCompare(String(b.dueAt||'')));
+  res.json({tasks:filtered,total:filtered.length});
+}catch(error){res.status(500).json({error:'读取任务失败',detail:error.message});}});
+app.post('/api/tasks',async(req,res)=>{try{
+  const parsed=validateTask(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});
+  const items=await readSchedules(),now=new Date().toISOString(),task={id:crypto.randomUUID(),...normalizeSchedule({...parsed.value,completed:parsed.value.status==='completed'}),priority:parsed.value.priority,createdAt:now,updatedAt:now,lastRemindedAt:null};
+  items.push(task);await writeSchedules(items);res.status(201).json({task});
+}catch(error){res.status(500).json({error:'保存任务失败',detail:error.message});}});
+app.put('/api/tasks/:id',async(req,res)=>{try{
+  const items=await readSchedules(),index=items.findIndex(item=>item.id===req.params.id&&item.kind!=='event');if(index<0)return res.status(404).json({error:'没有找到该任务'});
+  const current={...items[index],status:items[index].completed?'completed':'pending',priority:items[index].priority==='normal'?'medium':items[index].priority},parsed=validateTask(req.body||{},current);if(parsed.error)return res.status(400).json({error:parsed.error});
+  items[index]={...items[index],...parsed.value,completed:parsed.value.status==='completed',updatedAt:new Date().toISOString()};await writeSchedules(items);res.json({task:items[index]});
+}catch(error){res.status(500).json({error:'更新任务失败',detail:error.message});}});
+app.delete('/api/tasks/:id',async(req,res)=>{try{const items=await readSchedules(),next=items.filter(item=>item.id!==req.params.id||item.kind==='event');if(next.length===items.length)return res.status(404).json({error:'没有找到该任务'});await writeSchedules(next);res.json({deleted:true,total:next.filter(item=>item.kind!=='event').length});}catch(error){res.status(500).json({error:'删除任务失败',detail:error.message});}});
 
-app.get('/api/events',async(req,res)=>{try{const date=String(req.query.date||'');let events=await readCollection(eventsFile);if(date)events=events.filter(event=>{const start=new Date(`${date}T00:00:00`),end=new Date(start);end.setDate(end.getDate()+1);return new Date(event.startAt)<end&&new Date(event.endAt)>start;});events.sort((a,b)=>a.startAt.localeCompare(b.startAt));res.json({events,total:events.length});}catch(error){res.status(500).json({error:'读取日程失败',detail:error.message});}});
-app.post('/api/events',async(req,res)=>{try{const parsed=validateEvent(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});const events=await readCollection(eventsFile),now=new Date().toISOString(),event={id:crypto.randomUUID(),...parsed.value,createdAt:now,updatedAt:now},conflicts=findConflicts(event,events);events.push(event);await writeCollection(eventsFile,events);res.status(201).json({event,conflicts});}catch(error){res.status(500).json({error:'保存日程失败',detail:error.message});}});
-app.put('/api/events/:id',async(req,res)=>{try{const events=await readCollection(eventsFile),index=events.findIndex(item=>item.id===req.params.id);if(index<0)return res.status(404).json({error:'没有找到该日程'});const parsed=validateEvent(req.body||{},events[index]);if(parsed.error)return res.status(400).json({error:parsed.error});events[index]={...events[index],...parsed.value,updatedAt:new Date().toISOString()};const conflicts=findConflicts(events[index],events,events[index].id);await writeCollection(eventsFile,events);res.json({event:events[index],conflicts});}catch(error){res.status(500).json({error:'更新日程失败',detail:error.message});}});
-app.delete('/api/events/:id',async(req,res)=>{try{const events=await readCollection(eventsFile),next=events.filter(item=>item.id!==req.params.id);if(next.length===events.length)return res.status(404).json({error:'没有找到该日程'});await writeCollection(eventsFile,next);res.json({deleted:true,total:next.length});}catch(error){res.status(500).json({error:'删除日程失败',detail:error.message});}});
+app.get('/api/events',async(req,res)=>{try{const date=String(req.query.date||'');let events=(await readSchedules()).filter(item=>item.kind==='event');if(date)events=events.filter(event=>{const start=new Date(`${date}T00:00:00`),end=new Date(start);end.setDate(end.getDate()+1);return new Date(event.startAt)<end&&new Date(event.endAt)>start;});events.sort((a,b)=>a.startAt.localeCompare(b.startAt));res.json({events,total:events.length});}catch(error){res.status(500).json({error:'读取日程失败',detail:error.message});}});
+app.post('/api/events',async(req,res)=>{try{const parsed=validateEvent(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});const items=await readSchedules(),events=items.filter(item=>item.kind==='event'),now=new Date().toISOString(),event={id:crypto.randomUUID(),...parsed.value,kind:'event',dueAt:parsed.value.startAt,completed:false,status:'pending',priority:'normal',repeat:'none',reminderMinutes:15,source:'local',createdAt:now,updatedAt:now,lastRemindedAt:null},conflicts=findConflicts(event,events);items.push(event);await writeSchedules(items);res.status(201).json({event,conflicts});}catch(error){res.status(500).json({error:'保存日程失败',detail:error.message});}});
+app.put('/api/events/:id',async(req,res)=>{try{const items=await readSchedules(),index=items.findIndex(item=>item.id===req.params.id&&item.kind==='event');if(index<0)return res.status(404).json({error:'没有找到该日程'});const parsed=validateEvent(req.body||{},items[index]);if(parsed.error)return res.status(400).json({error:parsed.error});items[index]={...items[index],...parsed.value,dueAt:parsed.value.startAt,updatedAt:new Date().toISOString()};const conflicts=findConflicts(items[index],items.filter(item=>item.kind==='event'),items[index].id);await writeSchedules(items);res.json({event:items[index],conflicts});}catch(error){res.status(500).json({error:'更新日程失败',detail:error.message});}});
+app.delete('/api/events/:id',async(req,res)=>{try{const items=await readSchedules(),next=items.filter(item=>item.id!==req.params.id||item.kind!=='event');if(next.length===items.length)return res.status(404).json({error:'没有找到该日程'});await writeSchedules(next);res.json({deleted:true,total:next.filter(item=>item.kind==='event').length});}catch(error){res.status(500).json({error:'删除日程失败',detail:error.message});}});
 
 app.post('/api/tts', async (req, res) => {
   const text = String(req.body?.text || '').trim().slice(0, 1200);
