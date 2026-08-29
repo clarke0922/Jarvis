@@ -47,8 +47,8 @@ app.innerHTML = `
       <button id="workspaceNav" title="对话工作区">⚒<small>WORK</small></button>
       <button id="settingsNav" title="系统设置">⌘<small>CORE</small></button>
       <button id="knowledgeNav" title="本地知识库">◉<small>KNOW</small></button>
-      <button title="安全">⬡<small>SECURE</small></button>
-      <button title="网络">◎<small>NET</small></button>
+      <button id="securityNav" title="安全">⬡<small>SECURE</small></button>
+      <button id="networkNav" title="网络">◎<small>NET</small></button>
     </nav>
     <div class="system-state"><button id="languageToggle" class="language-toggle" type="button">EN</button><i></i><span id="clock">--:--:--</span><em>核心待命</em></div>
   </header>
@@ -371,7 +371,8 @@ async function renderSettingsMemories(){
   try{const data=await(await fetch('/api/memories?limit=50')).json();list.innerHTML=data.memories?.length?'':`<p class="loading-memory">${tr('还没有长期记忆')}</p>`;data.memories?.forEach(memory=>{const row=document.createElement('div');row.innerHTML=`<i></i><p><b></b><small></small></p><button title="${tr('删除记忆')}">×</button>`;row.querySelector('b').textContent=memory.content;row.querySelector('small').textContent=`${memory.category} · ${new Date(memory.createdAt).toLocaleDateString(locale())}`;row.querySelector('button').onclick=async()=>{if(!confirm(`${getLanguage()==='en'?'Forget this memory':'确定忘记'}：\n“${memory.content}”`))return;await fetch(`/api/memories/${memory.id}`,{method:'DELETE'});renderSettingsMemories();updateMemoryCount()};list.append(row)})}catch{list.innerHTML=`<p class="loading-memory">${tr('记忆读取失败')}</p>`}
 }
 
-function openSettings(){const modal=$('#settingsModal');modal.classList.add('open');modal.setAttribute('aria-hidden','false');loadSettings();renderSettingsMemories()}
+function selectSettingsTab(name){const button=document.querySelector(`[data-settings-tab="${name}"]`);if(!button)return;document.querySelectorAll('[data-settings-tab]').forEach(x=>x.classList.toggle('active',x===button));document.querySelectorAll('[data-settings-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.settingsPane===name))}
+function openSettings(tab='model'){selectSettingsTab(tab);const modal=$('#settingsModal');modal.classList.add('open');modal.setAttribute('aria-hidden','false');loadSettings();renderSettingsMemories()}
 function closeSettings(){const modal=$('#settingsModal');modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
 
 async function saveSettings(){
@@ -464,8 +465,8 @@ $('#scheduleForm').onsubmit=async e=>{e.preventDefault();try{await createSchedul
 document.querySelectorAll('[data-filter]').forEach(button=>button.onclick=()=>{scheduleFilter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===button));renderSchedules()});
 $('#calendarExport').onclick=()=>{const link=document.createElement('a');link.href='/api/calendar/export';link.download='jarvis-calendar.ics';document.body.append(link);link.click();link.remove()};
 $('#calendarImport').onclick=()=>$('#calendarFile').click();$('#calendarFile').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const response=await fetch('/api/calendar/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ics:await file.text()})}),data=await response.json();if(!response.ok)throw new Error(data.error);showToast(`已导入 ${data.imported} 项日程`);await loadSchedules()}catch(error){showToast(error.message)}finally{e.target.value=''}};
-$('#settingsNav').onclick=openSettings;$('#closeSettings').onclick=closeSettings;$('#saveSettings').onclick=saveSettings;$('#settingsModal').onclick=e=>{if(e.target===$('#settingsModal'))closeSettings()};
-document.querySelectorAll('[data-settings-tab]').forEach(button=>button.onclick=()=>{document.querySelectorAll('[data-settings-tab]').forEach(x=>x.classList.toggle('active',x===button));document.querySelectorAll('[data-settings-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.settingsPane===button.dataset.settingsTab))});
+$('#settingsNav').onclick=()=>openSettings();$('#securityNav').onclick=()=>openSettings('memory');$('#networkNav').onclick=()=>openSettings('model');$('#closeSettings').onclick=closeSettings;$('#saveSettings').onclick=saveSettings;$('#settingsModal').onclick=e=>{if(e.target===$('#settingsModal'))closeSettings()};
+document.querySelectorAll('[data-settings-tab]').forEach(button=>button.onclick=()=>selectSettingsTab(button.dataset.settingsTab));
 const providerPresets={deepseek:{provider:'deepseek',url:'https://api.deepseek.com',model:'deepseek-chat'},openai:{provider:'openai-compatible',url:'https://api.openai.com/v1',model:'gpt-4.1-mini'},siliconflow:{provider:'openai-compatible',url:'https://api.siliconflow.cn/v1',model:'deepseek-ai/DeepSeek-V3'},moonshot:{provider:'openai-compatible',url:'https://api.moonshot.cn/v1',model:'moonshot-v1-8k'},ollama:{provider:'ollama',url:'http://localhost:11434/v1',model:'llama3.2'}};
 document.querySelectorAll('[data-provider-preset]').forEach(button=>button.onclick=()=>{const preset=providerPresets[button.dataset.providerPreset];$('#settingProvider').value=preset.provider;$('#settingApiBaseUrl').value=preset.url;$('#settingModel').value=preset.model;$('#apiKeyState').textContent=preset.provider==='ollama'?'本地模型无需 API Key':'保存后检测 API Key'});
 $('#settingLanguage').onchange=e=>setLanguage(e.target.value,app);

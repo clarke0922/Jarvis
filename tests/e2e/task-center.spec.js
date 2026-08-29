@@ -34,3 +34,12 @@ test('switches language and remains usable on a narrow viewport', async ({ page 
   const initial=await page.locator('[data-center-title]').textContent(); await page.locator('#taskCenter [data-close]').click(); await page.locator('#languageToggle').click(); await page.locator('#taskCenterNav').click();
   await expect(page.locator('[data-center-title]')).not.toHaveText(initial); await page.setViewportSize({width:390,height:844}); await expect(page.locator('[data-new-task]')).toBeVisible();
 });
+
+test('opens security and network shortcuts on their matching settings panes', async ({ page }) => {
+  await page.locator('#taskCenter [data-close]').click();
+  await page.locator('#securityNav').click();
+  await expect(page.locator('[data-settings-pane=memory]')).toHaveClass(/active/);
+  await page.locator('#closeSettings').click();
+  await page.locator('#networkNav').click();
+  await expect(page.locator('[data-settings-pane=model]')).toHaveClass(/active/);
+});
