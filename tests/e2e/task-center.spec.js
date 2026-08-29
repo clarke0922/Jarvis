@@ -34,3 +34,10 @@ test('switches language and remains usable on a narrow viewport', async ({ page 
   const initial=await page.locator('[data-center-title]').textContent(); await page.locator('#taskCenter [data-close]').click(); await page.locator('#languageToggle').click(); await page.locator('#taskCenterNav').click();
   await expect(page.locator('[data-center-title]')).not.toHaveText(initial); await page.setViewportSize({width:390,height:844}); await expect(page.locator('[data-new-task]')).toBeVisible();
 });
+
+test('opens every main management center',async({page})=>{
+  await page.locator('#taskCenter [data-close]').click();
+  for(const [nav,modal,close] of [['#scheduleNav','#scheduleModal','#closeSchedule'],['#workspaceNav','#workspaceModal','#closeWorkspace'],['#knowledgeNav','#knowledgeModal','#closeKnowledge'],['#settingsNav','#settingsModal','#closeSettings']]){
+    await page.locator(nav).click(); await expect(page.locator(modal)).toHaveClass(/open/); await page.locator(close).click();
+  }
+});
