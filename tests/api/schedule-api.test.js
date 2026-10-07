@@ -228,3 +228,16 @@ describe('spa fallback',()=>{
     await request(app).get('/api/health').expect(200);
   });
 });
+
+describe('schedule brief boundaries',()=>{
+  it('classifies tasks as overdue, today, or upcoming by local day',async()=>{
+    const mk=(title,due)=>request(app).post('/api/schedules').send({title,dueAt:due}).then(r=>r);
+    await mk('Yesterday','2026-10-06T20:00:00+08:00');
+    await mk('Today morning','2026-10-07T08:00:00+08:00');
+    await mk('Tomorrow','2026-10-08T09:00:00+08:00');
+    const brief=(await request(app).get('/api/schedules/brief').expect(200)).body;
+    expect(brief.overdue.map(x=>x.title)).toContain('Yesterday');
+    expect(brief.today.map(x=>x.title)).toContain('Today morning');
+    expect(brief.upcoming.map(x=>x.title)).toContain('Tomorrow');
+  });
+});
