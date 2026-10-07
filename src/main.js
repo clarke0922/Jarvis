@@ -346,7 +346,7 @@ async function updateMemoryCount(){try{const data=await(await fetch('/api/memori
 
 async function relevantMemoryContext(query){
   if(!appSettings.memoryEnabled)return null;
-  try{const data=await(await fetch(`/api/memories?query=${encodeURIComponent(query)}`)).json();if(!data.memories?.length)return null;return `以下是仅供本轮参考的用户长期记忆：\n${data.memories.map(m=>`- [${m.category}] ${m.content}`).join('\n')}`}
+  try{const data=await(await fetch(`/api/memories?query=${encodeURIComponent(query)}&limit=${Number(appSettings.memoryContextLimit)||8}`)).json();if(!data.memories?.length)return null;return `以下是仅供本轮参考的用户长期记忆：\n${data.memories.map(m=>`- [${m.category}] ${m.content}`).join('\n')}`}
   catch{return null}
 }
 
