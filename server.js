@@ -305,7 +305,10 @@ app.put('/api/tasks/:id',async(req,res)=>{try{
   const items=await readSchedules(),index=items.findIndex(item=>item.id===req.params.id&&item.kind!=='event');if(index<0)return res.status(404).json({error:'没有找到该任务'});
   const current={...items[index],status:items[index].completed?'completed':'pending',priority:items[index].priority==='normal'?'medium':items[index].priority},parsed=validateTask(req.body||{},current);if(parsed.error)return res.status(400).json({error:parsed.error});
   const storedPriority=parsed.value.priority==='medium'?'normal':parsed.value.priority;
-  items[index]={...items[index],...parsed.value,priority:storedPriority,completed:parsed.value.status==='completed',updatedAt:new Date().toISOString()};await writeSchedules(items);res.json({task:items[index]});
+  const updatedAt=new Date().toISOString();
+  let updated={...items[index],...parsed.value,priority:storedPriority,completed:parsed.value.status==='completed',status:parsed.value.status,updatedAt};
+  if(!items[index].completed&&updated.completed&&updated.repeat!=='none'&&updated.dueAt){updated.completed=false;updated.status='pending';updated.dueAt=nextOccurrence(updated.dueAt,updated.repeat);updated.lastRemindedAt=null;}
+  items[index]=updated;await writeSchedules(items);res.json({task:items[index]});
 }catch(error){res.status(500).json({error:'更新任务失败',detail:error.message});}});
 app.delete('/api/tasks/:id',async(req,res)=>{try{const items=await readSchedules(),next=items.filter(item=>item.id!==req.params.id||item.kind==='event');if(next.length===items.length)return res.status(404).json({error:'没有找到该任务'});await writeSchedules(next);res.json({deleted:true,total:next.filter(item=>item.kind!=='event').length});}catch(error){res.status(500).json({error:'删除任务失败',detail:error.message});}});
 

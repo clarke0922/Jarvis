@@ -35,6 +35,15 @@ describe('task API',()=>{
     const after=await request(app).get('/api/schedules').expect(200);
     expect(after.body.items.find(item=>item.id===id).priority).toBe('normal');
   });
+  it('rolls a repeating task to its next occurrence when completed via the task API',async()=>{
+    const created=await request(app).post('/api/tasks').send({title:'Daily standup',priority:'high',dueAt:'2026-08-09T09:00:00+08:00'}).expect(201);
+    const id=created.body.task.id;
+    await request(app).put('/api/schedules/' + id).send({repeat:'daily'}).expect(200);
+    const done=await request(app).put('/api/tasks/' + id).send({status:'completed'}).expect(200);
+    expect(done.body.task.status).toBe('pending');
+    expect(done.body.task.completed).toBe(false);
+    expect(done.body.task.dueAt).toBe('2026-08-10T01:00:00.000Z');
+  });
   it('rejects invalid data and reports missing resources',async()=>{
     await request(app).post('/api/tasks').send({title:'',priority:'urgent'}).expect(400);
     await request(app).post('/api/tasks').send({title:'x',dueAt:'2026-08-09T10:00'}).expect(400);
