@@ -442,7 +442,12 @@ async function askDeepSeek(text){
     let response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:requestMessages,tools:activeTools})}); let data=await response.json();
     if(!response.ok) throw new Error(data.error||data.message||'DeepSeek 请求失败');
     let message=data.choices?.[0]?.message; if(!message) throw new Error('DeepSeek 未返回内容'); history.push(message);
-    if(message.tool_calls?.length){for(const call of message.tool_calls){let args={};try{args=JSON.parse(call.function.arguments||'{}')}catch{}const result=await executeTool(call.function.name,args);history.push({role:'tool',tool_call_id:call.id,content:String(result)})} response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});data=await response.json();if(!response.ok)throw new Error(data.error||'工具结果处理失败');message=data.choices?.[0]?.message;history.push(message)}
+    let toolRounds=0;
+    while(message.tool_calls?.length&&toolRounds<5){
+      toolRounds++;
+      for(const call of message.tool_calls){let args={};try{args=JSON.parse(call.function.arguments||'{}')}catch{}const result=await executeTool(call.function.name,args);history.push({role:'tool',tool_call_id:call.id,content:String(result)})}
+      response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});data=await response.json();if(!response.ok)throw new Error(data.error||'工具结果处理失败');message=data.choices?.[0]?.message;if(!message)throw new Error('DeepSeek 未返回内容');history.push(message);
+    }
     const answer=message.content||tr('任务已经处理完成。'); addTranscript('JARVIS',answer);syncWorkspaceDetail();if(currentWorkspaceId)saveCurrentWorkspace(true);speak(answer); $('#latency').textContent=`${Math.round(performance.now()-started)} ms`; $('#statusText').textContent=tr(listening?'正在聆听，请下达指令':'点击核心唤醒 JARVIS');
   }catch(e){resumeRecognitionAfterJarvis();if(e.message.includes('API Key')){addTask(text,getLanguage()==='en'?'Demo mode':'演示模式');addTranscript('JARVIS',getLanguage()==='en'?`Received: “${text}”. Configure a model API key in CORE settings.`:`已收到：“${text}”。请在 CORE 设置中配置模型 API Key。`)}else addTranscript('JARVIS',`${getLanguage()==='en'?'Connection error':'连接出现问题'}：${e.message}`);showToast(e.message);$('#statusText').textContent='模型链路未连接';}
 }
