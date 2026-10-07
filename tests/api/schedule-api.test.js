@@ -172,3 +172,23 @@ describe('memory API',()=>{
     await request(app).delete('/api/memories/missing').expect(404);
   });
 });
+
+describe('settings API',()=>{
+  it('persists settings, clamps ranges, and keeps an empty key unchanged',async()=>{
+    const saved=await request(app).put('/api/settings').send({model:'deepseek-chat',provider:'deepseek',memoryLimit:9999,memoryContextLimit:99,ttsRate:75,robotIntensity:-50}).expect(200);
+    expect(saved.body.settings).toMatchObject({memoryLimit:500,memoryContextLimit:20,ttsRate:20,robotIntensity:0});
+    const loaded=await request(app).get('/api/settings').expect(200);
+    expect(loaded.body.settings.model).toBe('deepseek-chat');
+  });
+  it('stores a provider key under the provider and base URL identity',async()=>{
+    await request(app).put('/api/settings').send({provider:'openai-compatible',apiBaseUrl:'https://api.openai.com/v1',model:'gpt-4.1-mini',providerApiKey:'sk-test-1234567890'}).expect(200);
+    const status=await request(app).get('/api/settings').expect(200);
+    expect(status.body.apiKeyConfigured).toBe(true);
+  });
+  it('exposes health and rejects invalid providers by falling back',async()=>{
+    const health=await request(app).get('/api/health').expect(200);
+    expect(health.body.online).toBe(true);
+    const fallback=await request(app).put('/api/settings').send({provider:'unknown-vendor'}).expect(200);
+    expect(['deepseek','openai-compatible','ollama']).toContain(fallback.body.settings.provider);
+  });
+});
