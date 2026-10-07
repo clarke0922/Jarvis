@@ -241,3 +241,13 @@ describe('schedule brief boundaries',()=>{
     expect(brief.upcoming.map(x=>x.title)).toContain('Tomorrow');
   });
 });
+
+describe('event conflict edge cases',()=>{
+  it('detects overlap on a cross-midnight event and allows adjacency',async()=>{
+    await request(app).post('/api/events').send({title:'Late session',startAt:'2026-08-09T22:00:00+08:00',endAt:'2026-08-10T01:00:00+08:00'}).expect(201);
+    const overlap=await request(app).post('/api/events').send({title:'Overlap',startAt:'2026-08-10T00:30:00+08:00',endAt:'2026-08-10T02:00:00+08:00'}).expect(201);
+    expect(overlap.body.conflicts.map(x=>x.title)).toEqual(['Late session']);
+    const adjacent=await request(app).post('/api/events').send({title:'Adjacent',startAt:'2026-08-10T02:00:00+08:00',endAt:'2026-08-10T03:00:00+08:00'}).expect(201);
+    expect(adjacent.body.conflicts).toHaveLength(0);
+  });
+});
