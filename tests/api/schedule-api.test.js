@@ -192,3 +192,13 @@ describe('settings API',()=>{
     expect(['deepseek','openai-compatible','ollama']).toContain(fallback.body.settings.provider);
   });
 });
+
+describe('tts API',()=>{
+  it('rejects empty text',async()=>{
+    await request(app).post('/api/tts').send({text:'   '}).expect(400);
+  });
+  it('refuses synthesis when voice playback is disabled',async()=>{
+    await request(app).put('/api/settings').send({ttsEnabled:false}).expect(200);
+    await request(app).post('/api/tts').send({text:'你好'}).expect(403);
+  });
+});
