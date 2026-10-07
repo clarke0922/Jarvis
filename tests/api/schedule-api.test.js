@@ -44,6 +44,12 @@ describe('task API',()=>{
     expect(done.body.task.completed).toBe(false);
     expect(done.body.task.dueAt).toBe('2026-08-10T01:00:00.000Z');
   });
+  it('returns default-priority tasks with medium in create and update responses',async()=>{
+    const created=await request(app).post('/api/tasks').send({title:'Dto check',dueAt:'2026-08-09T10:00:00+08:00'}).expect(201);
+    expect(created.body.task.priority).toBe('medium');
+    const updated=await request(app).put('/api/tasks/' + created.body.task.id).send({notes:'x'}).expect(200);
+    expect(updated.body.task.priority).toBe('medium');
+  });
   it('rejects invalid data and reports missing resources',async()=>{
     await request(app).post('/api/tasks').send({title:'',priority:'urgent'}).expect(400);
     await request(app).post('/api/tasks').send({title:'x',dueAt:'2026-08-09T10:00'}).expect(400);

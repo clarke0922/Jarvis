@@ -36,6 +36,7 @@ const defaultSettings = {
 };
 const allowedVoices = ['zh-CN-YunxiNeural', 'zh-CN-YunyangNeural', 'zh-CN-XiaoxiaoNeural'];
 
+const toTaskDto=item=>({...item,status:item.completed?'completed':'pending',priority:item.priority==='normal'?'medium':item.priority});
 async function readProviderSecrets(){try{return JSON.parse(await readFile(providerSecretsFile,'utf8'));}catch(error){if(error.code==='ENOENT')return{};throw error;}}
 async function writeProviderSecrets(secrets){await mkdir(memoryDir,{recursive:true});await writeFile(providerSecretsFile,JSON.stringify(secrets,null,2),'utf8');}
 function safeApiBaseUrl(value,current){try{const url=new URL(String(value||current));const local=['localhost','127.0.0.1','::1'].includes(url.hostname);if(url.protocol!=='https:'&&!(local&&url.protocol==='http:'))return current;return url.toString().replace(/\/$/,'');}catch{return current;}}
@@ -300,7 +301,7 @@ app.post('/api/tasks',async(req,res)=>{try{
   const parsed=validateTask(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});
   const storedPriority=parsed.value.priority==='medium'?'normal':parsed.value.priority;
   const items=await readSchedules(),now=new Date().toISOString(),task={id:crypto.randomUUID(),...normalizeSchedule({...parsed.value,priority:storedPriority,completed:parsed.value.status==='completed'}),priority:storedPriority,createdAt:now,updatedAt:now,lastRemindedAt:null};
-  items.push(task);await writeSchedules(items);res.status(201).json({task});
+  items.push(task);await writeSchedules(items);res.status(201).json({task:toTaskDto(task)});
 }catch(error){res.status(500).json({error:'保存任务失败',detail:error.message});}});
 app.put('/api/tasks/:id',async(req,res)=>{try{
   const items=await readSchedules(),index=items.findIndex(item=>item.id===req.params.id&&item.kind!=='event');if(index<0)return res.status(404).json({error:'没有找到该任务'});
@@ -309,7 +310,7 @@ app.put('/api/tasks/:id',async(req,res)=>{try{
   const updatedAt=new Date().toISOString();
   let updated={...items[index],...parsed.value,priority:storedPriority,completed:parsed.value.status==='completed',status:parsed.value.status,updatedAt};
   if(!items[index].completed&&updated.completed&&updated.repeat!=='none'&&updated.dueAt){updated.completed=false;updated.status='pending';updated.dueAt=nextOccurrence(updated.dueAt,updated.repeat);updated.lastRemindedAt=null;}
-  items[index]=updated;await writeSchedules(items);res.json({task:items[index]});
+  items[index]=updated;await writeSchedules(items);res.json({task:toTaskDto(updated)});
 }catch(error){res.status(500).json({error:'更新任务失败',detail:error.message});}});
 app.delete('/api/tasks/:id',async(req,res)=>{try{const items=await readSchedules(),next=items.filter(item=>item.id!==req.params.id||item.kind==='event');if(next.length===items.length)return res.status(404).json({error:'没有找到该任务'});await writeSchedules(next);res.json({deleted:true,total:next.filter(item=>item.kind!=='event').length});}catch(error){res.status(500).json({error:'删除任务失败',detail:error.message});}});
 
