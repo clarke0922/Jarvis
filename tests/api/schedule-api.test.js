@@ -100,3 +100,27 @@ describe('event API',()=>{
     await request(app).delete('/api/events/missing').expect(404);
   });
 });
+
+describe('knowledge API',()=>{
+  it('uploads a markdown document, indexes chunks, searches, and deletes it',async()=>{
+    const markdown='# 项目手册\n\nJARVIS 使用 Edge TTS 进行语音合成，并支持长期记忆检索。';
+    const uploaded=await request(app)
+      .post('/api/knowledge/upload')
+      .attach('file', Buffer.from(markdown,'utf8'), {filename:'manual.md'})
+      .expect(201);
+    expect(uploaded.body.item).toMatchObject({name:'manual.md',type:'md',chunkCount:1});
+    expect((await request(app).get('/api/knowledge').expect(200)).body.total).toBe(1);
+    const search=await request(app).get('/api/knowledge/search?query=语音合成').expect(200);
+    expect(search.body.matches).toHaveLength(1);
+    expect(search.body.matches[0].source).toBe('manual.md');
+    await request(app).delete('/api/knowledge/' + uploaded.body.item.id).expect(200);
+    expect((await request(app).get('/api/knowledge').expect(200)).body.total).toBe(0);
+  });
+  it('rejects unsupported file types and missing resources',async()=>{
+    await request(app)
+      .post('/api/knowledge/upload')
+      .attach('file', Buffer.from('hi','utf8'), {filename:'note.txt'})
+      .expect(400);
+    await request(app).delete('/api/knowledge/missing').expect(404);
+  });
+});
