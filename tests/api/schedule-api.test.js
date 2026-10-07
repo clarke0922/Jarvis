@@ -61,6 +61,16 @@ describe('calendar export',()=>{
   });
 });
 
+describe('calendar import',()=>{
+  it('imports an event with its end time when DTEND is present',async()=>{
+    const ics=['BEGIN:VCALENDAR','BEGIN:VEVENT','UID:meeting-1@test','DTSTART:20260809T010000Z','DTEND:20260809T023000Z','SUMMARY:Imported review','END:VEVENT','END:VCALENDAR'].join('\r\n');
+    await request(app).post('/api/calendar/import').send({ics}).expect(200);
+    const events=(await request(app).get('/api/events?date=2026-08-09').expect(200)).body.events;
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({title:'Imported review',startAt:'2026-08-09T01:00:00.000Z',endAt:'2026-08-09T02:30:00.000Z'});
+  });
+});
+
 describe('event API',()=>{
   it('stores events in the shared schedule collection',async()=>{
     await request(app).post('/api/events').send({title:'Shared event',startAt:'2026-08-09T09:00:00+08:00',endAt:'2026-08-09T10:00:00+08:00'}).expect(201);
