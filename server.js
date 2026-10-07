@@ -137,7 +137,7 @@ const icsEscape = value => String(value || '').replace(/\\/g,'\\\\').replace(/\n
 const icsDate = iso => new Date(iso).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
 function parseIcsDate(value) {
   const match=String(value||'').match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})Z?)?/); if(!match)return null;
-  const [,y,m,d,h='09',min='00',s='00']=match; const date=new Date(`${y}-${m}-${d}T${h}:${min}:${s}${value.endsWith('Z')?'Z':''}`);return Number.isNaN(date.valueOf())?null:date.toISOString();
+  const allDay=!/T\d{2}/.test(String(value||'')),[,y,m,d,h,min,sec]=match; const date=new Date(`${y}-${m}-${d}T${h||(allDay?'00':'09')}:${min||'00'}:${sec||'00'}${String(value).endsWith('Z')?'Z':''}`);return Number.isNaN(date.valueOf())?null:date.toISOString();
 }
 
 function memoryScore(memory, query) {

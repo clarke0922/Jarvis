@@ -71,6 +71,16 @@ describe('calendar import',()=>{
   });
 });
 
+describe('calendar all-day import',()=>{
+  it('imports an all-day event spanning local midnight to midnight',async()=>{
+    const ics=['BEGIN:VCALENDAR','BEGIN:VEVENT','UID:allday-1@test','DTSTART;VALUE=DATE:20260809','DTEND;VALUE=DATE:20260810','SUMMARY:Holiday','END:VEVENT','END:VCALENDAR'].join('\r\n');
+    await request(app).post('/api/calendar/import').send({ics}).expect(200);
+    const events=(await request(app).get('/api/events?date=2026-08-09').expect(200)).body.events;
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({title:'Holiday',startAt:'2026-08-08T16:00:00.000Z',endAt:'2026-08-09T16:00:00.000Z'});
+  });
+});
+
 describe('event API',()=>{
   it('stores events in the shared schedule collection',async()=>{
     await request(app).post('/api/events').send({title:'Shared event',startAt:'2026-08-09T09:00:00+08:00',endAt:'2026-08-09T10:00:00+08:00'}).expect(201);
