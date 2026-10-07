@@ -52,6 +52,15 @@ describe('task API',()=>{
   });
 });
 
+describe('calendar export',()=>{
+  it('exports events with start and end times',async()=>{
+    await request(app).post('/api/events').send({title:'Review',startAt:'2026-08-09T09:00:00+08:00',endAt:'2026-08-09T10:30:00+08:00'}).expect(201);
+    const ics=(await request(app).get('/api/calendar/export').expect(200)).text;
+    expect(ics).toContain('DTSTART:' + '20260809T010000Z');
+    expect(ics).toContain('DTEND:' + '20260809T023000Z');
+  });
+});
+
 describe('event API',()=>{
   it('stores events in the shared schedule collection',async()=>{
     await request(app).post('/api/events').send({title:'Shared event',startAt:'2026-08-09T09:00:00+08:00',endAt:'2026-08-09T10:00:00+08:00'}).expect(201);

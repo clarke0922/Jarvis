@@ -267,7 +267,8 @@ app.delete('/api/schedules/:id',async(req,res)=>{
 });
 
 app.get('/api/calendar/export',async(_req,res)=>{
-  try{const items=(await readSchedules()).filter(item=>item.dueAt),lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//JARVIS//Schedule Center//CN','CALSCALE:GREGORIAN'];for(const item of items){lines.push('BEGIN:VEVENT',`UID:${item.id}@jarvis.local`,`DTSTAMP:${icsDate(item.updatedAt||item.createdAt)}`,`DTSTART:${icsDate(item.dueAt)}`,`SUMMARY:${icsEscape(item.title)}`,`DESCRIPTION:${icsEscape(item.notes)}`);if(item.repeat!=='none')lines.push(`RRULE:FREQ=${item.repeat.toUpperCase()}`);lines.push('END:VEVENT');}lines.push('END:VCALENDAR');res.set({'Content-Type':'text/calendar; charset=utf-8','Content-Disposition':'attachment; filename="jarvis-calendar.ics"'}).send(lines.join('\r\n'));}
+  try{const items=(await readSchedules()).filter(item=>item.dueAt),lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//JARVIS//Schedule Center//CN','CALSCALE:GREGORIAN'];for(const item of items){const endField=item.kind==='event'&&item.endAt?[`DTEND:${icsDate(item.endAt)}`]:[];
+lines.push('BEGIN:VEVENT',`UID:${item.id}@jarvis.local`,`DTSTAMP:${icsDate(item.updatedAt||item.createdAt)}`,`DTSTART:${icsDate(item.dueAt)}`,...endField,`SUMMARY:${icsEscape(item.title)}`,`DESCRIPTION:${icsEscape(item.notes)}`);if(item.repeat!=='none')lines.push(`RRULE:FREQ=${item.repeat.toUpperCase()}`);lines.push('END:VEVENT');}lines.push('END:VCALENDAR');res.set({'Content-Type':'text/calendar; charset=utf-8','Content-Disposition':'attachment; filename="jarvis-calendar.ics"'}).send(lines.join('\r\n'));}
   catch(error){res.status(500).json({error:'导出日历失败',detail:error.message});}
 });
 
