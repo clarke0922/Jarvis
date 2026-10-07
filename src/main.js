@@ -389,6 +389,7 @@ function speakWithSystemVoice(text,preview={}){
 }
 
 async function speak(text,preview={}){
+  if(appSettings.ttsEnabled===false){resumeRecognitionAfterJarvis();return;}
   try{
     pauseRecognitionForJarvis();
     if(currentAudio){try{currentAudio.stop?.()}catch{}currentAudio=null}
