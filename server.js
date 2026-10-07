@@ -153,6 +153,8 @@ function memoryScore(memory, query) {
 app.use(express.json({ limit: '64kb' }));
 app.use(express.static('dist'));
 
+app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(path.resolve('dist','index.html')));
+
 app.post('/api/chat', async (req, res) => {
   try {
     const settings = await readSettings();

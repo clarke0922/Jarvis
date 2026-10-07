@@ -220,3 +220,11 @@ describe('tts API',()=>{
     await request(app).post('/api/tts').send({text:'你好'}).expect(403);
   });
 });
+
+describe('spa fallback',()=>{
+  it('serves index.html for non-api paths and keeps api routes intact',async()=>{
+    const page=await request(app).get('/some/client/route').expect(200);
+    expect(page.text).toContain('<div id="app"></div>');
+    await request(app).get('/api/health').expect(200);
+  });
+});
