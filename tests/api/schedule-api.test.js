@@ -124,3 +124,28 @@ describe('knowledge API',()=>{
     await request(app).delete('/api/knowledge/missing').expect(404);
   });
 });
+
+describe('workspace API',()=>{
+  it('creates, lists, loads, updates, and deletes a workspace',async()=>{
+    const created=await request(app).post('/api/workspaces').send({title:'Planning',mode:'analyst',messages:[{role:'user',content:'first question'},{role:'assistant',content:'first answer'}]}).expect(201);
+    const id=created.body.item.id;
+    expect(created.body.item).toMatchObject({title:'Planning',mode:'analyst'});
+    const list=await request(app).get('/api/workspaces').expect(200);
+    expect(list.body.items).toHaveLength(1);
+    expect(list.body.items[0]).toMatchObject({preview:'first answer',messageCount:2});
+    expect((await request(app).get('/api/workspaces/' + id).expect(200)).body.item.title).toBe('Planning');
+    const filtered=await request(app).get('/api/workspaces?query=planning').expect(200);
+    expect(filtered.body.items).toHaveLength(1);
+    await request(app).put('/api/workspaces/' + id).send({title:'Renamed'}).expect(200);
+    expect((await request(app).get('/api/workspaces/' + id).expect(200)).body.item.title).toBe('Renamed');
+    await request(app).delete('/api/workspaces/' + id).expect(200);
+    expect((await request(app).get('/api/workspaces').expect(200)).body.total).toBe(0);
+  });
+  it('rejects missing resources and invalid modes',async()=>{
+    await request(app).get('/api/workspaces/missing').expect(404);
+    await request(app).put('/api/workspaces/missing').send({title:'x'}).expect(404);
+    await request(app).delete('/api/workspaces/missing').expect(404);
+    const created=await request(app).post('/api/workspaces').send({title:'Mode guard',mode:'unknown'}).expect(201);
+    expect(created.body.item.mode).toBe('general');
+  });
+});
