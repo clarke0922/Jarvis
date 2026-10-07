@@ -24,6 +24,17 @@ describe('task API',()=>{
     await request(app).delete(`/api/tasks/${id}`).expect(200);
     expect((await request(app).get('/api/tasks').expect(200)).body.total).toBe(0);
   });
+  it('stores the default medium priority as normal in the shared collection',async()=>{
+    await request(app).post('/api/tasks').send({title:'Default priority',dueAt:'2026-08-09T10:00:00+08:00'}).expect(201);
+    const schedules=await request(app).get('/api/schedules?date=2026-08-09').expect(200);
+    expect(schedules.body.items[0].priority).toBe('normal');
+    const tasks=await request(app).get('/api/tasks?date=2026-08-09').expect(200);
+    expect(tasks.body.tasks[0].priority).toBe('medium');
+    const id=tasks.body.tasks[0].id;
+    await request(app).put('/api/tasks/' + id).send({notes:'touched'}).expect(200);
+    const after=await request(app).get('/api/schedules').expect(200);
+    expect(after.body.items.find(item=>item.id===id).priority).toBe('normal');
+  });
   it('rejects invalid data and reports missing resources',async()=>{
     await request(app).post('/api/tasks').send({title:'',priority:'urgent'}).expect(400);
     await request(app).post('/api/tasks').send({title:'x',dueAt:'2026-08-09T10:00'}).expect(400);

@@ -297,13 +297,15 @@ app.get('/api/tasks',async(req,res)=>{try{
 }catch(error){res.status(500).json({error:'读取任务失败',detail:error.message});}});
 app.post('/api/tasks',async(req,res)=>{try{
   const parsed=validateTask(req.body||{});if(parsed.error)return res.status(400).json({error:parsed.error});
-  const items=await readSchedules(),now=new Date().toISOString(),task={id:crypto.randomUUID(),...normalizeSchedule({...parsed.value,completed:parsed.value.status==='completed'}),priority:parsed.value.priority,createdAt:now,updatedAt:now,lastRemindedAt:null};
+  const storedPriority=parsed.value.priority==='medium'?'normal':parsed.value.priority;
+  const items=await readSchedules(),now=new Date().toISOString(),task={id:crypto.randomUUID(),...normalizeSchedule({...parsed.value,priority:storedPriority,completed:parsed.value.status==='completed'}),priority:storedPriority,createdAt:now,updatedAt:now,lastRemindedAt:null};
   items.push(task);await writeSchedules(items);res.status(201).json({task});
 }catch(error){res.status(500).json({error:'保存任务失败',detail:error.message});}});
 app.put('/api/tasks/:id',async(req,res)=>{try{
   const items=await readSchedules(),index=items.findIndex(item=>item.id===req.params.id&&item.kind!=='event');if(index<0)return res.status(404).json({error:'没有找到该任务'});
   const current={...items[index],status:items[index].completed?'completed':'pending',priority:items[index].priority==='normal'?'medium':items[index].priority},parsed=validateTask(req.body||{},current);if(parsed.error)return res.status(400).json({error:parsed.error});
-  items[index]={...items[index],...parsed.value,completed:parsed.value.status==='completed',updatedAt:new Date().toISOString()};await writeSchedules(items);res.json({task:items[index]});
+  const storedPriority=parsed.value.priority==='medium'?'normal':parsed.value.priority;
+  items[index]={...items[index],...parsed.value,priority:storedPriority,completed:parsed.value.status==='completed',updatedAt:new Date().toISOString()};await writeSchedules(items);res.json({task:items[index]});
 }catch(error){res.status(500).json({error:'更新任务失败',detail:error.message});}});
 app.delete('/api/tasks/:id',async(req,res)=>{try{const items=await readSchedules(),next=items.filter(item=>item.id!==req.params.id||item.kind==='event');if(next.length===items.length)return res.status(404).json({error:'没有找到该任务'});await writeSchedules(next);res.json({deleted:true,total:next.filter(item=>item.kind!=='event').length});}catch(error){res.status(500).json({error:'删除任务失败',detail:error.message});}});
 
