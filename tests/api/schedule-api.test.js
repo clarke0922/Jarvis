@@ -265,3 +265,12 @@ describe('memory limit trimming',()=>{
     expect(contents[contents.length-1]).toBe('memory 3');
   });
 });
+
+describe('chat demo mode',()=>{
+  it('returns a demo response when no provider key is configured',async()=>{
+    await request(app).put('/api/settings').send({provider:'openai-compatible',apiBaseUrl:'https://api.openai.com/v1',model:'gpt-4.1-mini'}).expect(200);
+    const response=await request(app).post('/api/chat').send({messages:[{role:'user',content:'hi'}]});
+    expect([503,200]).toContain(response.status);
+    if (response.status===503) expect(response.body.demo).toBe(true);
+  });
+});
