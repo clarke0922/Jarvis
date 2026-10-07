@@ -149,3 +149,26 @@ describe('workspace API',()=>{
     expect(created.body.item.mode).toBe('general');
   });
 });
+
+describe('memory API',()=>{
+  it('saves, searches, deletes one, and clears all memories',async()=>{
+    await request(app).post('/api/memories').send({content:'用户喜欢简洁回答',category:'preference'}).expect(201);
+    await request(app).post('/api/memories').send({content:'每天早上八点开会',category:'habit'}).expect(201);
+    const found=await request(app).get('/api/memories?query=简洁').expect(200);
+    expect(found.body.memories).toHaveLength(1);
+    expect(found.body.memories[0].content).toBe('用户喜欢简洁回答');
+    const all=await request(app).get('/api/memories').expect(200);
+    await request(app).delete('/api/memories/' + all.body.memories[0].id).expect(200);
+    expect((await request(app).get('/api/memories').expect(200)).body.total).toBe(1);
+    await request(app).delete('/api/memories').expect(200);
+    expect((await request(app).get('/api/memories').expect(200)).body.total).toBe(0);
+  });
+  it('rejects empty content and secrets, and treats duplicates as such',async()=>{
+    await request(app).post('/api/memories').send({content:'   '}).expect(400);
+    await request(app).post('/api/memories').send({content:'密码是 abc123'}).expect(400);
+    await request(app).post('/api/memories').send({content:'sk-' + 'a'.repeat(24)}).expect(400);
+    await request(app).post('/api/memories').send({content:'固定偏好内容'}).expect(201);
+    expect((await request(app).post('/api/memories').send({content:'固定偏好内容'}).expect(200)).body.duplicate).toBe(true);
+    await request(app).delete('/api/memories/missing').expect(404);
+  });
+});
