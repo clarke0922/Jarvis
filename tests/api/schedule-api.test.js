@@ -50,6 +50,18 @@ describe('task API',()=>{
     const updated=await request(app).put('/api/tasks/' + created.body.task.id).send({notes:'x'}).expect(200);
     expect(updated.body.task.priority).toBe('medium');
   });
+  it('rolls weekly and monthly repeating tasks by their calendar period',async()=>{
+    const weekly=await request(app).post('/api/tasks').send({title:'Weekly review',priority:'high',dueAt:'2026-08-09T09:00:00+08:00'}).expect(201);
+    const wid=weekly.body.task.id;
+    await request(app).put('/api/schedules/' + wid).send({repeat:'weekly'}).expect(200);
+    const wdone=await request(app).put('/api/tasks/' + wid).send({status:'completed'}).expect(200);
+    expect(wdone.body.task.dueAt).toBe('2026-08-16T01:00:00.000Z');
+    const monthly=await request(app).post('/api/tasks').send({title:'Monthly report',priority:'high',dueAt:'2026-08-09T09:00:00+08:00'}).expect(201);
+    const mid=monthly.body.task.id;
+    await request(app).put('/api/schedules/' + mid).send({repeat:'monthly'}).expect(200);
+    const mdone=await request(app).put('/api/tasks/' + mid).send({status:'completed'}).expect(200);
+    expect(mdone.body.task.dueAt).toBe('2026-09-09T01:00:00.000Z');
+  });
   it('rejects invalid data and reports missing resources',async()=>{
     await request(app).post('/api/tasks').send({title:'',priority:'urgent'}).expect(400);
     await request(app).post('/api/tasks').send({title:'x',dueAt:'2026-08-09T10:00'}).expect(400);
