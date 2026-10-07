@@ -251,3 +251,17 @@ describe('event conflict edge cases',()=>{
     expect(adjacent.body.conflicts).toHaveLength(0);
   });
 });
+
+describe('memory limit trimming',()=>{
+  it('keeps only the newest memories when the limit is exceeded',async()=>{
+    await request(app).put('/api/settings').send({memoryLimit:20}).expect(200);
+    for (let index=1; index<=22; index++) {
+      await request(app).post('/api/memories').send({content:'memory ' + index}).expect(201);
+    }
+    const all=await request(app).get('/api/memories?limit=50').expect(200);
+    const contents=all.body.memories.map(x=>x.content);
+    expect(contents).toHaveLength(20);
+    expect(contents[0]).toBe('memory 22');
+    expect(contents[contents.length-1]).toBe('memory 3');
+  });
+});
